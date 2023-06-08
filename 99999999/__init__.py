@@ -39,7 +39,12 @@ def send_prompt(prompt):
 
 
 # Function to process the note and generate the result
-def process_note(note):
+def process_note(browser):
+
+    if not browser.editor:
+        raise Exception()
+
+    note = browser.editor.note
     print("ChatGPT addon: note to process ")
     pprint(inspect.getmembers(note))
 
@@ -72,7 +77,18 @@ def process_note(note):
     print("ChatGPT addon: note after chatgpt response")
     pprint(inspect.getmembers(note))
     # Save the modified note
-    note.flush()
+    browser.editor.loadNoteKeepingFocus()
+
+
+def tmp_edit_field(note, browser):
+    res = 'The word 気心 in this sentence refers to the familiarity and understanding ' \
+          'between people who share similar interests or characteristics. In this ' \
+          'context, it refers to the feeling of being with close friends who share ' \
+          'the same gender, rather than feeling like a man and a woman in a romantic ' \
+          'sense.'
+    browser.editor.note["ChatGPT Output"] = res
+
+    browser.editor.loadNoteKeepingFocus()
 
 
 # Function to process the notes in Anki
@@ -82,10 +98,12 @@ def process_notes(browser):
     if not nids:
         return tooltip("No cards selected.")
 
-    print (browser.__class__.__name__)
+    print(browser.__class__.__name__)
+    if (len(nids) != 1):
+        raise Exception()
     for nid in nids:
-        note = mw.col.getNote(nid)
-        process_note(note)
+        # note = mw.col.getNote(nid)
+        process_note(browser)
 
 
 # Hook function to add the "Process Notes" menu option
