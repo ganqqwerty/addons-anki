@@ -1,0 +1,5 @@
+{
+  "apiKey": "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",
+  "prompt": "Explain the usage of the word {{{Word}}} in the following sentence: {{{Sentence}}}",
+  "targetField": "ChatGPT Output"
+}

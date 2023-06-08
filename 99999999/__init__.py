@@ -1,112 +1,85 @@
-from pprint import pprint
-import inspect
-
-import requests
-from aqt.utils import tooltip
+import os
+import sys
+import re
+from aqt import mw
+from aqt.utils import showInfo, showWarning
 from aqt.qt import QAction
 from anki.hooks import addHook
-from aqt.utils import showWarning
 
+# Add vendor directory to sys.path
+addon_dir = os.path.dirname(os.path.realpath(__file__))
+vendor_dir = os.path.join(addon_dir, "vendor")
+sys.path.append(vendor_dir)
+import openai
 
-# Function to send a prompt to the ChatGPT API
+class ChatGPTAddon:
 
-def send_prompt(prompt):
-    api_url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer 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"
-    }
-    data = {
-        "model": "gpt-3.5-turbo",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.7
-    }
-    response = requests.post(api_url, headers=headers, json=data)
+    def __init__(self, note, config, editor):
+        self.note = note
+        self.config = config
+        self.editor = editor
+        # Setting the API key for openai
+        openai.api_key = self.config['apiKey']
 
-    print("ChatGPT addon: result from chatgpt:")
-    pprint(response.json())
+    def generate(self):
+        try:
+            note = self.note
 
-    if response.status_code == 200:
-        result = response.json()
-        completion = result["choices"][0]["message"]["content"].strip()
-        return completion
-    else:
-        error_message = response.json().get("error", {}).get(
-            "message") or "An error occurred while making the API call."
-        raise Exception(error_message)
+            # Get the prompt from config and replace placeholders with actual note field values.
+            prompt = self.create_prompt(self.config['prompt'], note)
 
+            # Call to the GPT-3 model.
+            response = openai.Completion.create(
+                engine="text-davinci-002",
+                prompt=prompt,
+                temperature=0.5,
+                max_tokens=60
+            )
 
-# Function to process the note and generate the result
-def process_note_in_editor(browser):
+            # Assuming 'text' contains the output text you want to set for the field.
+            # Get the text from the response.
+            text = response.choices[0].text.strip()
+
+            target_field = self.config['targetField']
+            if target_field in note:
+                note[target_field] = text
+            else:
+                raise ValueError(f"Target field '{target_field}' not found in note.")
+            self.editor.loadNoteKeepingFocus()
+
+        except ValueError as ve:
+            # handle the error, for example, log it or display it to the user
+            showWarning(f"Error: {ve}")
+
+    def create_prompt(self, prompt, note):
+        # Regex pattern for fields enclosed in triple curly brackets.
+        pattern = re.compile(r"{{{(.*?)}}}")
+
+        # Find all field placeholders in the prompt.
+        fields_in_prompt = pattern.findall(prompt)
+
+        # For each placeholder, replace it with the corresponding value from the note.
+        for field in fields_in_prompt:
+            if field in note:
+                prompt = prompt.replace(f"{{{field}}}", note[field])
+            else:
+                raise ValueError(f"Field '{field}' not found in note.")
+
+        return prompt
+
+def process_notes(browser):
     if not browser.editor:
-        raise Exception()
+        raise Exception("No active editor found.")
 
     note = browser.editor.note
-    print("ChatGPT addon: note to process ")
-    pprint(inspect.getmembers(note))
+    config = mw.addonManager.getConfig(__name__)  # Get the config from the json file
+    ChatGPTAddon(note, config, browser.editor).generate()
 
-    # Check if the target field and source fields exist in the note
-    target_field = "ChatGPT Output"
-    source_fields = ["Sentence", "Word"]
-
-    if target_field not in note:
-        return showWarning(f"Target field '{target_field}' is missing in the note.")
-
-    for field in source_fields:
-        if field not in note:
-            return showWarning(f"Source field '{field}' is missing in the note.")
-
-    # Get the content from the fields and assign them to variables
-    sentence = note["Sentence"]
-    target_word = note["Word"]
-
-    # Create a prompt with the field content inserted into placeholders
-    prompt = f"Explain the usage of the word {target_word} in the following sentence from the grammar point of view: {sentence}"
-
-    # Send the prompt to the ChatGPT API and get the result
-    try:
-        result = send_prompt(prompt)
-    except Exception as e:
-        return showWarning(f"An error occurred while processing the note: {str(e)}")
-
-    # Assign the result to the "ChatGPT Output" field in the note
-    note["ChatGPT Output"] = result
-    print("ChatGPT addon: note after chatgpt response")
-    pprint(inspect.getmembers(note))
-    # Save the modified note
-    browser.editor.loadNoteKeepingFocus()
-
-
-def tmp_edit_field(note, browser):
-    res = 'The word 気心 in this sentence refers to the familiarity and understanding ' \
-          'between people who share similar interests or characteristics. In this ' \
-          'context, it refers to the feeling of being with close friends who share ' \
-          'the same gender, rather than feeling like a man and a woman in a romantic ' \
-          'sense.'
-    browser.editor.note["ChatGPT Output"] = res
-
-    browser.editor.loadNoteKeepingFocus()
-
-
-# Function to process the notes in Anki
-def process_notes(browser):
-    nids = browser.selectedNotes()
-
-    if not nids or len(nids) == 0:
-        return tooltip("No cards selected.")
-    if len(nids) > 1:
-        raise Exception("current version does not support multiple notes")
-    process_note_in_editor(browser)
-
-
-
-# Hook function to add the "Process Notes" menu option
 def add_menu_option(browser):
     a = QAction("Process Notes with ChatGPT", browser)
     a.triggered.connect(lambda: process_notes(browser))
     browser.form.menuEdit.addSeparator()
     browser.form.menuEdit.addAction(a)
-
 
 # Register the hook function to be called when setting up menus in the browser
 addHook("browser.setupMenus", add_menu_option)
