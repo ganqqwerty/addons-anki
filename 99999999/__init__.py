@@ -21,6 +21,28 @@ class ChatGPTAddon:
         # Setting the API key for openai
         openai.api_key = self.config['apiKey']
 
+    def request_data(self, prompt):
+        # Call to the GPT-3 model and return the response.
+        response = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=prompt,
+            temperature=0.5,
+            max_tokens=60
+        )
+        return response
+
+    def set_response_to_note(self, response):
+        # Assuming 'text' contains the output text you want to set for the field.
+        # Get the text from the response.
+        text = response.choices[0].text.strip()
+
+        target_field = self.config['targetField']
+        if target_field in self.note:
+            self.note[target_field] = text
+        else:
+            raise ValueError(f"Target field '{target_field}' not found in note.")
+        self.editor.loadNoteKeepingFocus()
+
     def generate(self):
         try:
             note = self.note
@@ -28,24 +50,11 @@ class ChatGPTAddon:
             # Get the prompt from config and replace placeholders with actual note field values.
             prompt = self.create_prompt(self.config['prompt'], note)
 
-            # Call to the GPT-3 model.
-            response = openai.Completion.create(
-                engine="text-davinci-002",
-                prompt=prompt,
-                temperature=0.5,
-                max_tokens=60
-            )
+            # Request data from API.
+            response = self.request_data(prompt)
 
-            # Assuming 'text' contains the output text you want to set for the field.
-            # Get the text from the response.
-            text = response.choices[0].text.strip()
-
-            target_field = self.config['targetField']
-            if target_field in note:
-                note[target_field] = text
-            else:
-                raise ValueError(f"Target field '{target_field}' not found in note.")
-            self.editor.loadNoteKeepingFocus()
+            # Set the response to the note.
+            self.set_response_to_note(response)
 
         except ValueError as ve:
             # handle the error, for example, log it or display it to the user
