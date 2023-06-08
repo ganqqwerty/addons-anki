@@ -1,9 +1,7 @@
-import json
 from pprint import pprint
 import inspect
 
 import requests
-from aqt import mw
 from aqt.utils import tooltip
 from aqt.qt import QAction
 from anki.hooks import addHook
@@ -39,8 +37,7 @@ def send_prompt(prompt):
 
 
 # Function to process the note and generate the result
-def process_note(browser):
-
+def process_note_in_editor(browser):
     if not browser.editor:
         raise Exception()
 
@@ -95,15 +92,12 @@ def tmp_edit_field(note, browser):
 def process_notes(browser):
     nids = browser.selectedNotes()
 
-    if not nids:
+    if not nids or len(nids) == 0:
         return tooltip("No cards selected.")
+    if len(nids) > 1:
+        raise Exception("current version does not support multiple notes")
+    process_note_in_editor(browser)
 
-    print(browser.__class__.__name__)
-    if (len(nids) != 1):
-        raise Exception()
-    for nid in nids:
-        # note = mw.col.getNote(nid)
-        process_note(browser)
 
 
 # Hook function to add the "Process Notes" menu option
