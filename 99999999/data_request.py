@@ -30,6 +30,7 @@ def send_prompt_to_openai(prompt):
         return "This is a fake response for emulation mode."
 
     try:
+        print("Request to chatgpt: ", prompt)
         response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
         return response.choices[0].text.strip()
     except Exception as e:

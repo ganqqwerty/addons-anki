@@ -4,10 +4,11 @@ from aqt.utils import showWarning
 from .modify_notes import fill_field_for_note_in_editor, fill_field_for_note_not_in_editor
 from .data_request import create_prompt, send_prompt_to_openai
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QPushButton
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QPushButton, QLabel
 from PyQt5.QtCore import Qt
 from concurrent.futures import Future, ThreadPoolExecutor
 from PyQt5.QtCore import QThread, pyqtSignal
+
 
 class Worker(QThread):
     progress_made = pyqtSignal(int)
@@ -28,20 +29,29 @@ class Worker(QThread):
                 generate_for_multiple_notes(nid, self.prompt_config)
             self.progress_made.emit(i)
 
+
 class ProgressDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle('Processing...')
-        self.setWindowModality(Qt.ApplicationModal)
-        self.progress_bar = QProgressBar(self)
-        self.cancel_button = QPushButton('Cancel', self)
+        super(ProgressDialog, self).__init__(parent)
+        self.worker = None
+        layout = QVBoxLayout()
 
-        layout = QVBoxLayout(self)
+        self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
+
+        self.counter_label = QLabel()
+        layout.addWidget(self.counter_label)
+
+        self.cancel_button = QPushButton('Cancel')
+        self.cancel_button.clicked.connect(self.cancel)
         layout.addWidget(self.cancel_button)
 
-        self.cancel_button.clicked.connect(self.cancel)
-        self.worker = None
+        self.setLayout(layout)
+        self.setWindowTitle("Processing Notes...")
+
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
+        self.counter_label.setText(f"{value} of {self.progress_bar.maximum()} processed")
 
     def run_task(self, notes, prompt_config):
         self.progress_bar.setMaximum(len(notes))
@@ -55,11 +65,6 @@ class ProgressDialog(QDialog):
         if self.worker:
             self.worker.requestInterruption()
         self.close()
-
-    def update_progress(self, i):
-        self.progress_bar.setValue(i + 1)
-        if self.progress_bar.value() == self.progress_bar.maximum():
-            self.close()
 
 
 def generate_for_single_note(editor, prompt_config):
@@ -79,13 +84,14 @@ def generate_for_multiple_notes(nid, prompt_config):
     fill_field_for_note_not_in_editor(response, note, prompt_config)
 
 
-
 def process_notes(browser, prompt_config):
     selected_notes = browser.selectedNotes()
     if not selected_notes:
         showWarning("No notes selected.")
         return
 
-    progress_dialog = ProgressDialog(browser)
-    progress_dialog.run_task(selected_notes, prompt_config)  # pass selected_notes and prompt_config
-
+    if len(selected_notes) == 1 and browser.editor and browser.editor.note:
+        generate_for_single_note(browser.editor, prompt_config)
+    else:
+        progress_dialog = ProgressDialog(browser)
+        progress_dialog.run_task(selected_notes, prompt_config)
