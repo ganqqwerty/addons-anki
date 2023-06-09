@@ -132,7 +132,7 @@ class RunPromptDialog(QDialog):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
-        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.browser)
+        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.browser.selectedNotes())
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
@@ -140,6 +140,7 @@ class RunPromptDialog(QDialog):
         self.accept()
     def get_result(self):
         return self.result
+
 
 
 def process_notes(browser, prompt_config):
@@ -157,11 +158,11 @@ def process_notes(browser, prompt_config):
             chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
 
 
-def get_invalid_fields_in_prompt(prompt, browser):
+def get_invalid_fields_in_prompt(prompt, selected_nodes):
     field_pattern = r'\{\{\{(.+?)\}\}\}'
     field_names = re.findall(field_pattern, prompt)
     invalid_fields = []
-    for nid in browser.selectedNotes():
+    for nid in selected_nodes:
         note = mw.col.getNote(nid)
         for field_name in field_names:
             if field_name not in note:
