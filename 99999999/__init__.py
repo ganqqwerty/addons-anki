@@ -14,70 +14,77 @@ import openai
 
 from .run_prompt_dialog import RunPromptDialog
 
-class ChatGPTAddon:
-    def __init__(self, config):
-        self.config = config
-        openai.api_key = self.config['apiKey']
+config = mw.addonManager.getConfig(__name__)
+openai.api_key = config['apiKey']
+ADDON_NAME = 'Anki AI Add-on'
 
-    def generate_for_single_note(self, browser, prompt_config):
-        """Generate text for a single note (editor note)."""
-        prompt = self.create_prompt(browser.editor.note, prompt_config)
-        response = self.send_prompt_to_openai(prompt)
-        self.set_response_to_editor_note(response, browser, prompt_config)
 
-    def generate_for_multiple_notes(self, nid, prompt_config):
-        """Generate text for multiple notes."""
-        note = mw.col.getNote(nid)
-        prompt = self.create_prompt(note, prompt_config)
-        response = self.send_prompt_to_openai(prompt)
-        self.set_response_to_note(response, note, prompt_config)
+def generate_for_single_note(editor, prompt_config):
+    """Generate text for a single note (editor note)."""
+    prompt = create_prompt(editor.note, prompt_config)
+    response = send_prompt_to_openai(prompt)
 
-    def create_prompt(self, note, prompt_config):
-        prompt_template = prompt_config['prompt']
-        pattern = re.compile(r'\{\{\{(\w+)\}\}\}')
-        field_names = pattern.findall(prompt_template)
-        for field_name in field_names:
-            if field_name not in note:
-                raise ValueError(f"Field '{field_name}' not found in note.")
-            prompt_template = prompt_template.replace(f'{{{field_name}}}', note[field_name])
-        return prompt_template
+    target_field = prompt_config['targetField']
+    fill_field_for_note_in_editor(response, target_field, editor)
 
-    def send_prompt_to_openai(self, prompt):
-        if self.config.get('emulate') == 'yes':
-            return "This is a fake response for emulation mode."
 
-        try:
-            response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
-            return response.choices[0].text.strip()
-        except Exception as e:
-            showWarning(f"An error occurred while processing the note: {str(e)}")
-            return None
+def generate_for_multiple_notes(nid, prompt_config):
+    """Generate text for multiple notes."""
+    note = mw.col.getNote(nid)
+    prompt = create_prompt(note, prompt_config)
+    response = send_prompt_to_openai(prompt)
+    set_response_to_note(response, note, prompt_config)
 
-    def set_response_to_editor_note(self, response, browser, prompt_config):
-        """Set response to the editor's note."""
-        if response is None:
-            return
 
-        target_field = prompt_config['targetField']
-        if target_field in browser.editor.note:
-            browser.editor.note[target_field] = response
-        else:
-            raise ValueError(f"Target field '{target_field}' not found in note.")
+def create_prompt(note, prompt_config):
+    prompt_template = prompt_config['prompt']
+    pattern = re.compile(r'\{\{\{(\w+)\}\}\}')
+    field_names = pattern.findall(prompt_template)
+    for field_name in field_names:
+        if field_name not in note:
+            raise ValueError(f"Field '{field_name}' not found in note.")
+        prompt_template = prompt_template.replace(f'{{{field_name}}}', note[field_name])
+    return prompt_template
 
-        browser.editor.loadNoteKeepingFocus()
 
-    def set_response_to_note(self, response, note, prompt_config):
-        """Set response to the note."""
-        if response is None:
-            return
+def send_prompt_to_openai(prompt):
+    if config.get('emulate') == 'yes':
+        return "This is a fake response for emulation mode."
 
-        target_field = prompt_config['targetField']
-        if target_field in note:
-            note[target_field] = response
-        else:
-            raise ValueError(f"Target field '{target_field}' not found in note.")
+    try:
+        response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
+        return response.choices[0].text.strip()
+    except Exception as e:
+        showWarning(f"An error occurred while processing the note: {str(e)}")
+        return None
 
-        note.flush()
+
+def fill_field_for_note_in_editor(response, target_field, editor ):
+    """Set response to the editor's note."""
+    if response is None:
+        return
+
+    if target_field in editor.note:
+        editor.note[target_field] = response
+    else:
+        raise ValueError(f"Target field '{target_field}' not found in note.")
+
+    editor.loadNoteKeepingFocus()
+
+
+def set_response_to_note(response, note, prompt_config):
+    """Set response to the note."""
+    if response is None:
+        return
+
+    target_field = prompt_config['targetField']
+    if target_field in note:
+        note[target_field] = response
+    else:
+        raise ValueError(f"Target field '{target_field}' not found in note.")
+
+    note.flush()
+
 
 def process_notes(browser, prompt_config):
     selected_notes = browser.selectedNotes()
@@ -85,17 +92,11 @@ def process_notes(browser, prompt_config):
         showWarning("No notes selected.")
         return
 
-    config = mw.addonManager.getConfig(__name__)
-    chatGPTAddon = ChatGPTAddon(config)
     if len(selected_notes) == 1 and browser.editor and browser.editor.note:
-        chatGPTAddon.generate_for_single_note(browser, prompt_config)
+        generate_for_single_note(browser.editor, prompt_config)
     else:
         for nid in selected_notes:
-            chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
-
-
-
-ADDON_NAME = 'Anki AI Add-on'
+            generate_for_multiple_notes(nid, prompt_config)
 
 
 def create_run_prompt_dialog(browser, prompt_config):
@@ -105,9 +106,7 @@ def create_run_prompt_dialog(browser, prompt_config):
         process_notes(browser, updated_prompt_config)
 
 
-def on_browser_will_show_context_menu(browser, menu):
-    config = mw.addonManager.getConfig(__name__)
-
+def add_prompts_as_context_menu_items(browser, menu):
     submenu = QMenu(ADDON_NAME, menu)
     menu.addMenu(submenu)
     for prompt_config in config['prompts']:
@@ -119,4 +118,4 @@ def on_browser_will_show_context_menu(browser, menu):
         submenu.addAction(a)
 
 
-addHook("browser.onContextMenu", on_browser_will_show_context_menu)
+addHook("browser.onContextMenu", add_prompts_as_context_menu_items)
