@@ -3,7 +3,7 @@ import sys
 import json
 import re
 from typing import Dict
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QAction, QMenu
 from aqt import mw
 from aqt.utils import showWarning
 from anki.hooks import addHook
@@ -92,13 +92,15 @@ def process_notes(browser, prompt_config):
     else:
         for nid in selected_notes:
             chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
-
 def add_menu_option(browser):
     config = mw.addonManager.getConfig(__name__)
+
+    menu = QMenu('Anki AI Add-on', browser.form.menuEdit)
+    browser.form.menuEdit.addMenu(menu)
+
     for prompt_config in config['prompts']:
         a = QAction(prompt_config["promptName"], browser)
         a.triggered.connect(lambda _, prompt_config=prompt_config: process_notes(browser, prompt_config))
-        browser.form.menuEdit.addSeparator()
-        browser.form.menuEdit.addAction(a)
+        menu.addAction(a)
 
 addHook("browser.setupMenus", add_menu_option)
