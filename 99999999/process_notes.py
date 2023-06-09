@@ -1,13 +1,10 @@
+from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QPushButton, QLabel
 from aqt import mw
 from aqt.utils import showWarning
 
-from .modify_notes import fill_field_for_note_in_editor, fill_field_for_note_not_in_editor
 from .data_request import create_prompt, send_prompt_to_openai
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QPushButton, QLabel
-from PyQt5.QtCore import Qt
-from concurrent.futures import Future, ThreadPoolExecutor
-from PyQt5.QtCore import QThread, pyqtSignal
+from .modify_notes import fill_field_for_note_in_editor, fill_field_for_note_not_in_editor
 
 
 class Worker(QThread):
@@ -27,7 +24,7 @@ class Worker(QThread):
                 generate_for_single_note(self.browser.editor, self.prompt_config)
             else:
                 generate_for_multiple_notes(nid, self.prompt_config)
-            self.progress_made.emit(i)
+            self.progress_made.emit(i+1)
 
 
 class ProgressDialog(QDialog):
@@ -58,14 +55,18 @@ class ProgressDialog(QDialog):
         self.progress_bar.setValue(0)
         self.worker = Worker(notes, mw.col, prompt_config)  # pass the notes and prompt_config
         self.worker.progress_made.connect(self.update_progress)
+        self.worker.finished.connect(self.on_worker_finished)  # connect the finish signal to a slot
         self.worker.start()
         self.show()
+
+    def on_worker_finished(self):
+        self.update_progress(self.progress_bar.maximum())  # when the worker is finished, set the progress bar to maximum
+        self.close()  # close the dialog when the worker finishes
 
     def cancel(self):
         if self.worker:
             self.worker.requestInterruption()
         self.close()
-
 
 def generate_for_single_note(editor, prompt_config):
     """Generate text for a single note (editor note)."""
