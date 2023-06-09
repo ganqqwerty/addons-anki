@@ -132,7 +132,7 @@ class RunPromptDialog(QDialog):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
-        invalid_fields = check_fields_in_prompt(self.prompt_config["prompt"], self.browser)
+        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.browser)
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
@@ -156,7 +156,7 @@ def process_notes(browser, prompt_config):
             chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
 
 
-def check_fields_in_prompt(prompt, browser):
+def get_invalid_fields_in_prompt(prompt, browser):
     field_pattern = r'\{\{\{(.+?)\}\}\}'
     field_names = re.findall(field_pattern, prompt)
     invalid_fields = []
