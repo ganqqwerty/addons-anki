@@ -82,7 +82,7 @@ class ChatGPTAddon:
 class RunPromptDialog(QDialog):
     def __init__(self, browser, prompt_config):
         super().__init__(browser)
-        self.browser = browser
+        self.selected_nodes = browser.selectedNotes()
         self.prompt_config = prompt_config
         self.initUI()
 
@@ -108,8 +108,8 @@ class RunPromptDialog(QDialog):
         self.setLayout(layout)
 
     def get_common_fields(self):
-        common_fields = set(mw.col.getNote(self.browser.selectedNotes()[0]).keys())
-        for nid in self.browser.selectedNotes():
+        common_fields = set(mw.col.getNote(self.selected_nodes[0]).keys())
+        for nid in self.selected_nodes:
             note = mw.col.getNote(nid)
             note_fields = set(note.keys())
             common_fields = common_fields.intersection(note_fields)
@@ -132,7 +132,7 @@ class RunPromptDialog(QDialog):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
-        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.browser.selectedNotes())
+        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.selected_nodes)
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
