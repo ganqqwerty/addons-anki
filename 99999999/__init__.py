@@ -32,99 +32,98 @@ def add_prompts_as_context_menu_items(browser, menu):
 
 addHook("browser.onContextMenu", add_prompts_as_context_menu_items)
 
-
-
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import showInfo
 
-
-class SettingsDialog(QDialog):
+class SettingsWindow(QDialog):
     def __init__(self, parent=None):
-        super(SettingsDialog, self).__init__(parent)
-        self.setWindowTitle("Anki AI Add-on Settings")
+        super().__init__(parent)
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        self.setWindowTitle('ChatGPT Settings')
+        self.setLayout(QVBoxLayout())
 
-        self.config = mw.addonManager.getConfig(__name__)
+        config = mw.addonManager.getConfig(__name__)
 
-        self.api_key_input = QLineEdit(self.config['apiKey'])
-        self.layout.addWidget(QLabel("API Key:"))
-        self.layout.addWidget(self.api_key_input)
+        self.apiKey = QLineEdit(config["apiKey"])
+        self.apiKey.setPlaceholderText("API key")
+        self.layout().addWidget(QLabel("API Key:"))
+        self.layout().addWidget(self.apiKey)
 
-        self.emulate_combobox = QComboBox()
-        self.emulate_combobox.addItems(["yes", "no"])
-        self.emulate_combobox.setCurrentText(self.config['emulate'])
-        self.layout.addWidget(QLabel("Emulate mode:"))
-        self.layout.addWidget(self.emulate_combobox)
+        self.emulate = QComboBox()
+        self.emulate.addItem("yes")
+        self.emulate.addItem("no")
+        self.emulate.setCurrentText(config["emulate"])
+        self.layout().addWidget(QLabel("Emulate:"))
+        self.layout().addWidget(self.emulate)
 
-        self.layout.addWidget(QLabel("Prompts:"))
+        self.promptsTable = QTableWidget()
+        self.promptsTable.setColumnCount(3)
+        self.promptsTable.setHorizontalHeaderLabels(["Prompt", "Target Field", "Prompt Name"])
+        self.promptsTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.promptsTable.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        self.prompts_layout = QVBoxLayout()
-        self.layout.addLayout(self.prompts_layout)
+        for i, prompt in enumerate(config["prompts"]):
+            self.add_prompt_inputs(i, prompt)
 
-        self.prompts_inputs = []
-        for prompt in self.config['prompts']:
-            self.add_prompt_inputs(prompt)
+        self.layout().addWidget(QLabel("Prompts:"))
+        self.layout().addWidget(self.promptsTable)
 
-        add_prompt_button = QPushButton("Add Prompt")
-        add_prompt_button.clicked.connect(self.add_prompt_inputs)
-        self.layout.addWidget(add_prompt_button)
+        self.addPromptButton = QPushButton('Add Prompt')
+        self.addPromptButton.clicked.connect(self.add_prompt)
+        self.layout().addWidget(self.addPromptButton)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-            Qt.Horizontal, self)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        self.layout.addWidget(buttons)
+        self.removePromptButton = QPushButton('Remove Prompt')
+        self.removePromptButton.clicked.connect(self.remove_prompt)
+        self.layout().addWidget(self.removePromptButton)
 
-    def add_prompt_inputs(self, prompt=None):
-        layout = QHBoxLayout()
-        self.prompts_layout.addLayout(layout)
+        self.saveButton = QPushButton('Save')
+        self.saveButton.clicked.connect(self.saveConfig)
+        self.layout().addWidget(self.saveButton)
 
-        prompt_name_input = QLineEdit(prompt['promptName'] if prompt else "")
-        prompt_input = QLineEdit(prompt['prompt'] if prompt else "")
-        target_field_input = QLineEdit(prompt['targetField'] if prompt else "")
+    def add_prompt_inputs(self, i, prompt=None):
+        prompt = prompt or {"prompt": "", "targetField": "", "promptName": ""}
 
-        layout.addWidget(QLabel("Name:"))
-        layout.addWidget(prompt_name_input)
-        layout.addWidget(QLabel("Prompt:"))
-        layout.addWidget(prompt_input)
-        layout.addWidget(QLabel("Target Field:"))
-        layout.addWidget(target_field_input)
+        promptInput = QTextEdit(prompt["prompt"])
+        targetFieldInput = QLineEdit(prompt["targetField"])
+        promptNameInput = QLineEdit(prompt["promptName"])
 
-        remove_button = QPushButton("Remove")
-        remove_button.clicked.connect(lambda: self.remove_prompt_inputs(layout))
-        layout.addWidget(remove_button)
+        self.promptsTable.setRowCount(self.promptsTable.rowCount() + 1)
+        self.promptsTable.setCellWidget(i, 0, promptInput)
+        self.promptsTable.setCellWidget(i, 1, targetFieldInput)
+        self.promptsTable.setCellWidget(i, 2, promptNameInput)
 
-        self.prompts_inputs.append((prompt_name_input, prompt_input, target_field_input))
+    def add_prompt(self):
+        i = self.promptsTable.rowCount()
+        self.add_prompt_inputs(i)
 
-    def remove_prompt_inputs(self, layout):
-        for i in reversed(range(layout.count())):  # remove widgets
-            widget = layout.itemAt(i).widget()
-            layout.removeWidget(widget)
-            widget.setParent(None)
-        self.prompts_layout.removeItem(layout)  # remove layout
+    def remove_prompt(self):
+        if self.promptsTable.rowCount() > 0:
+            self.promptsTable.removeRow(self.promptsTable.rowCount() - 1)
 
-        # remove from prompts_inputs
-        for inputs in self.prompts_inputs:
-            if inputs[0].parent() is None:  # if the QLineEdit for the prompt name has been removed
-                self.prompts_inputs.remove(inputs)
-                break
+    def saveConfig(self):
+        config = mw.addonManager.getConfig(__name__)
+        config["apiKey"] = self.apiKey.text()
+        config["emulate"] = self.emulate.currentText()
 
-    def accept(self):
-        self.config['apiKey'] = self.api_key_input.text()
-        self.config['emulate'] = self.emulate_combobox.currentText()
-        self.config['prompts'] = [{'promptName': inputs[0].text(), 'prompt': inputs[1].text(), 'targetField': inputs[2].text()}
-                                  for inputs in self.prompts_inputs]
-        mw.addonManager.writeConfig(__name__, self.config)
-        super(SettingsDialog, self).accept()
+        config["prompts"] = []
+        for i in range(self.promptsTable.rowCount()):
+            promptInput = self.promptsTable.cellWidget(i, 0)
+            targetFieldInput = self.promptsTable.cellWidget(i, 1)
+            promptNameInput = self.promptsTable.cellWidget(i, 2)
 
+            config["prompts"].append({
+                "prompt": promptInput.toPlainText(),
+                "targetField": targetFieldInput.text(),
+                "promptName": promptNameInput.text()
+            })
 
-def open_settings():
-    dialog = SettingsDialog()
-    dialog.exec_()
+        mw.addonManager.writeConfig(__name__, config)
+        showInfo("Configuration saved.")
+        self.close()
 
+def openSettings():
+    window = SettingsWindow(mw)
+    window.exec_()
 
-mw.addonManager.setConfigAction(__name__, open_settings)
+mw.addonManager.setConfigAction(__name__, openSettings)
