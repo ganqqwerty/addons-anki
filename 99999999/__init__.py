@@ -102,7 +102,7 @@ class RunPromptDialog(QDialog):
         layout.addWidget(self.target_field_editor)
 
         run_button = QPushButton("Run")
-        run_button.clicked.connect(self.run_processing)
+        run_button.clicked.connect(self.try_to_accept)
 
         layout.addWidget(run_button)
         self.setLayout(layout)
@@ -128,7 +128,7 @@ class RunPromptDialog(QDialog):
                 break
             cursor.mergeCharFormat(field_format)
 
-    def run_processing(self):
+    def try_to_accept(self):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
@@ -136,9 +136,10 @@ class RunPromptDialog(QDialog):
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
-
-        process_notes(self.browser, self.prompt_config)
-        self.close()
+        self.result = self.prompt_config
+        self.accept()
+    def get_result(self):
+        return self.result
 
 
 def process_notes(browser, prompt_config):
@@ -168,19 +169,29 @@ def get_invalid_fields_in_prompt(prompt, browser):
                     invalid_fields.append(field_name)
     return invalid_fields
 
+
 ADDON_NAME = 'Anki AI Add-on'
 
-def create_menu_option(browser, config, parent_menu):
-    for prompt_config in config['prompts']:
-        a = QAction(prompt_config["promptName"], browser)
-        a.triggered.connect(lambda _, prompt_config=prompt_config: RunPromptDialog(browser, prompt_config).exec_())
-        parent_menu.addAction(a)
+
+def create_run_prompt_dialog(browser, prompt_config):
+    dialog = RunPromptDialog(browser, prompt_config)
+    if dialog.exec_() == QDialog.Accepted:
+        updated_prompt_config = dialog.get_result()
+        process_notes(browser, updated_prompt_config)
+
 
 def on_browser_will_show_context_menu(browser, menu):
     config = mw.addonManager.getConfig(__name__)
 
     submenu = QMenu(ADDON_NAME, menu)
     menu.addMenu(submenu)
-    create_menu_option(browser, config, submenu)
+    for prompt_config in config['prompts']:
+        a = QAction(prompt_config["promptName"], browser)
+        a.triggered.connect(
+            lambda _, br=browser, pc=prompt_config:
+            create_run_prompt_dialog(br, pc)
+        )
+        submenu.addAction(a)
+
 
 addHook("browser.onContextMenu", on_browser_will_show_context_menu)
