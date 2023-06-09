@@ -1,6 +1,5 @@
 import re
 
-from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
 from aqt import mw
 from aqt.utils import showWarning
@@ -20,7 +19,7 @@ class RunPromptDialog(QDialog):
 
         self.prompt_editor = QTextEdit()
         self.prompt_editor.setPlainText(self.prompt_config["prompt"])
-        self.highlight_fields(self.prompt_editor)
+
         self.target_field_editor = QComboBox()
         self.target_field_editor.addItems(self.get_common_fields())
         if self.prompt_config["targetField"] in self.get_common_fields():
@@ -44,19 +43,6 @@ class RunPromptDialog(QDialog):
             note_fields = set(note.keys())
             common_fields = common_fields.intersection(note_fields)
         return list(common_fields)
-
-    def highlight_fields(self, text_editor):
-        field_pattern = r'\{\{\{(.+?)\}\}\}'
-        field_format = QTextCharFormat()
-        field_format.setForeground(QColor('olive'))
-        cursor = text_editor.textCursor()
-        cursor.movePosition(QTextCursor.Start)
-        text_editor.setTextCursor(cursor)
-        while cursor.position() < len(text_editor.toPlainText()):
-            cursor = text_editor.document().find(field_pattern, cursor)
-            if cursor.isNull():
-                break
-            cursor.mergeCharFormat(field_format)
 
     def try_to_accept(self):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
