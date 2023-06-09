@@ -19,21 +19,21 @@ class ChatGPTAddon:
         self.config = config
         openai.api_key = self.config['apiKey']
 
-    def generate_for_single_note(self, browser):
+    def generate_for_single_note(self, browser, prompt_config):
         """Generate text for a single note (editor note)."""
-        prompt = self.create_prompt(browser.editor.note)
+        prompt = self.create_prompt(browser.editor.note, prompt_config)
         response = self.send_prompt_to_openai(prompt)
-        self.set_response_to_editor_note(response, browser)
+        self.set_response_to_editor_note(response, browser, prompt_config)
 
-    def generate_for_multiple_notes(self, nid):
+    def generate_for_multiple_notes(self, nid, prompt_config):
         """Generate text for multiple notes."""
         note = mw.col.getNote(nid)
-        prompt = self.create_prompt(note)
+        prompt = self.create_prompt(note, prompt_config)
         response = self.send_prompt_to_openai(prompt)
-        self.set_response_to_note(response, note)
+        self.set_response_to_note(response, note, prompt_config)
 
-    def create_prompt(self, note):
-        prompt_template = self.config['prompt']
+    def create_prompt(self, note, prompt_config):
+        prompt_template = prompt_config['prompt']
         pattern = re.compile(r'\{\{\{(\w+)\}\}\}')
         field_names = pattern.findall(prompt_template)
         for field_name in field_names:
@@ -53,12 +53,12 @@ class ChatGPTAddon:
             showWarning(f"An error occurred while processing the note: {str(e)}")
             return None
 
-    def set_response_to_editor_note(self, response, browser):
+    def set_response_to_editor_note(self, response, browser, prompt_config):
         """Set response to the editor's note."""
         if response is None:
             return
 
-        target_field = self.config['targetField']
+        target_field = prompt_config['targetField']
         if target_field in browser.editor.note:
             browser.editor.note[target_field] = response
         else:
@@ -66,12 +66,12 @@ class ChatGPTAddon:
 
         browser.editor.loadNoteKeepingFocus()
 
-    def set_response_to_note(self, response, note):
+    def set_response_to_note(self, response, note, prompt_config):
         """Set response to the note."""
         if response is None:
             return
 
-        target_field = self.config['targetField']
+        target_field = prompt_config['targetField']
         if target_field in note:
             note[target_field] = response
         else:
@@ -79,7 +79,7 @@ class ChatGPTAddon:
 
         note.flush()
 
-def process_notes(browser):
+def process_notes(browser, prompt_config):
     selected_notes = browser.selectedNotes()
     if not selected_notes:
         showWarning("No notes selected.")
@@ -88,16 +88,17 @@ def process_notes(browser):
     config = mw.addonManager.getConfig(__name__)
     chatGPTAddon = ChatGPTAddon(config)
     if len(selected_notes) == 1 and browser.editor and browser.editor.note:
-        chatGPTAddon.generate_for_single_note(browser)
+        chatGPTAddon.generate_for_single_note(browser, prompt_config)
     else:
         for nid in selected_notes:
-            chatGPTAddon.generate_for_multiple_notes(nid)
+            chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
 
 def add_menu_option(browser):
     config = mw.addonManager.getConfig(__name__)
-    a = QAction(config['promptName'], browser)
-    a.triggered.connect(lambda: process_notes(browser))
-    browser.form.menuEdit.addSeparator()
-    browser.form.menuEdit.addAction(a)
+    for prompt_config in config['prompts']:
+        a = QAction(prompt_config["promptName"], browser)
+        a.triggered.connect(lambda _, prompt_config=prompt_config: process_notes(browser, prompt_config))
+        browser.form.menuEdit.addSeparator()
+        browser.form.menuEdit.addAction(a)
 
 addHook("browser.setupMenus", add_menu_option)

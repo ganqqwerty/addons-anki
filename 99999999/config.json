@@ -1,7 +1,16 @@
 {
   "apiKey": "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",
-  "prompt": "Explain the usage of the word {{{Word}}} in the following sentence: {{{Sentence}}}",
-  "targetField": "ChatGPT Output",
   "emulate": "yes",
-  "promptName": "Explain usage of the word"
+  "prompts": [
+    {
+      "prompt": "Explain the usage of the word {{{Word}}} in the following sentence: {{{Sentence}}}",
+      "targetField": "ChatGPT Output",
+      "promptName": "Explain usage of the word"
+    },
+    {
+      "prompt": "Translate the {{{Word}}} that I saw in a sentence '{{{Sentence}}}' to Russian",
+      "targetField": "ChatGPT Output",
+      "promptName": "Translate to Russian"
+    }
+  ]
 }
