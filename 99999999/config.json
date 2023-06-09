@@ -1,6 +1,6 @@
 {
   "apiKey": "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",
-  "emulate": "yes",
+  "emulate": "no",
   "prompts": [
     {
       "prompt": "Explain the usage of the word {{{Word}}} in the following sentence: {{{Sentence}}}",

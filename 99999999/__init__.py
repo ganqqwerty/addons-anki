@@ -11,7 +11,7 @@ from .run_prompt_dialog import RunPromptDialog
 
 def create_run_prompt_dialog(browser, prompt_config):
     dialog = RunPromptDialog(browser, browser.selectedNotes(), prompt_config)
-    if dialog.exec_() == QDialog.Accepted:
+    if dialog.exec_() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
 
