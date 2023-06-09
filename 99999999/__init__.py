@@ -80,9 +80,9 @@ class ChatGPTAddon:
 
 
 class RunPromptDialog(QDialog):
-    def __init__(self, browser, prompt_config):
-        super().__init__(browser)
-        self.selected_nodes = browser.selectedNotes()
+    def __init__(self, parent, selected_nodes, prompt_config):
+        super().__init__(parent)
+        self.selected_nodes = selected_nodes
         self.prompt_config = prompt_config
         self.initUI()
 
@@ -158,11 +158,11 @@ def process_notes(browser, prompt_config):
             chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
 
 
-def get_invalid_fields_in_prompt(prompt, selected_nodes):
+def get_invalid_fields_in_prompt(prompt, selected_notes):
     field_pattern = r'\{\{\{(.+?)\}\}\}'
     field_names = re.findall(field_pattern, prompt)
     invalid_fields = []
-    for nid in selected_nodes:
+    for nid in selected_notes:
         note = mw.col.getNote(nid)
         for field_name in field_names:
             if field_name not in note:
@@ -175,7 +175,7 @@ ADDON_NAME = 'Anki AI Add-on'
 
 
 def create_run_prompt_dialog(browser, prompt_config):
-    dialog = RunPromptDialog(browser, prompt_config)
+    dialog = RunPromptDialog(browser, browser.selectedNotes(), prompt_config)
     if dialog.exec_() == QDialog.Accepted:
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
