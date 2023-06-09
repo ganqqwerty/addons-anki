@@ -1,17 +1,11 @@
 import os
 import sys
-import json
 import re
-from typing import Dict
-from PyQt5.QtWidgets import QAction, QMenu
+from PyQt5.QtWidgets import QAction, QMenu, QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
+from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
 from aqt import mw
 from aqt.utils import showWarning
 from anki.hooks import addHook
-from PyQt5.QtWidgets import QTextEdit, QMessageBox, QDialog, QVBoxLayout, QPlainTextEdit, QLineEdit, QPushButton, QLabel
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
-from PyQt5.QtWidgets import QAction, QMenu, QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
-from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
-
 
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
@@ -84,22 +78,6 @@ class ChatGPTAddon:
 
         note.flush()
 
-def process_notes(browser, prompt_config):
-    selected_notes = browser.selectedNotes()
-    if not selected_notes:
-        showWarning("No notes selected.")
-        return
-
-    config = mw.addonManager.getConfig(__name__)
-    chatGPTAddon = ChatGPTAddon(config)
-    if len(selected_notes) == 1 and browser.editor and browser.editor.note:
-        chatGPTAddon.generate_for_single_note(browser, prompt_config)
-    else:
-        for nid in selected_notes:
-            chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
-
-
-
 
 class CustomDialog(QDialog):
     def __init__(self, browser, prompt_config):
@@ -161,6 +139,23 @@ class CustomDialog(QDialog):
 
         process_notes(self.browser, self.prompt_config)
         self.close()
+
+
+def process_notes(browser, prompt_config):
+    selected_notes = browser.selectedNotes()
+    if not selected_notes:
+        showWarning("No notes selected.")
+        return
+
+    config = mw.addonManager.getConfig(__name__)
+    chatGPTAddon = ChatGPTAddon(config)
+    if len(selected_notes) == 1 and browser.editor and browser.editor.note:
+        chatGPTAddon.generate_for_single_note(browser, prompt_config)
+    else:
+        for nid in selected_notes:
+            chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
+
+
 def check_fields_in_prompt(prompt, browser):
     field_pattern = r'\{\{\{(.+?)\}\}\}'
     field_names = re.findall(field_pattern, prompt)
@@ -173,7 +168,6 @@ def check_fields_in_prompt(prompt, browser):
                     invalid_fields.append(field_name)
     return invalid_fields
 
-
 def add_menu_option(browser):
     config = mw.addonManager.getConfig(__name__)
 
@@ -184,5 +178,18 @@ def add_menu_option(browser):
         a = QAction(prompt_config["promptName"], browser)
         a.triggered.connect(lambda _, prompt_config=prompt_config: CustomDialog(browser, prompt_config).exec_())
         menu.addAction(a)
+
+def on_browser_will_show_context_menu(browser, menu):
+    config = mw.addonManager.getConfig(__name__)
+
+    submenu = QMenu('Anki AI Add-on', menu)
+    menu.addMenu(submenu)
+
+    for prompt_config in config['prompts']:
+        a = QAction(prompt_config["promptName"], browser)
+        a.triggered.connect(lambda _, prompt_config=prompt_config: CustomDialog(browser, prompt_config).exec_())
+        submenu.addAction(a)
+
+addHook("browser.onContextMenu", on_browser_will_show_context_menu)
 
 addHook("browser.setupMenus", add_menu_option)
