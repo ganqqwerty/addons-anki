@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QAction, QMenu, QDialog
 from anki.hooks import addHook
 
-from .process_notes import config, process_notes
+from .process_notes import process_notes
+from aqt import mw
 
 ADDON_NAME = 'Anki AI Add-on'
 
@@ -18,6 +19,8 @@ def create_run_prompt_dialog(browser, prompt_config):
 def add_prompts_as_context_menu_items(browser, menu):
     submenu = QMenu(ADDON_NAME, menu)
     menu.addMenu(submenu)
+    config = mw.addonManager.getConfig(__name__)
+
     for prompt_config in config['prompts']:
         a = QAction(prompt_config["promptName"], browser)
         a.triggered.connect(
