@@ -8,7 +8,10 @@ from aqt import mw
 from aqt.utils import showWarning
 from anki.hooks import addHook
 from PyQt5.QtWidgets import QTextEdit, QMessageBox, QDialog, QVBoxLayout, QPlainTextEdit, QLineEdit, QPushButton, QLabel
-from PyQt5.QtWidgets import QTextEdit, QMessageBox
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
+from PyQt5.QtWidgets import QAction, QMenu, QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
+from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
+
 
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
@@ -97,10 +100,10 @@ def process_notes(browser, prompt_config):
 
 
 
+
 class CustomDialog(QDialog):
     def __init__(self, browser, prompt_config):
         super().__init__(browser)
-
         self.browser = browser
         self.prompt_config = prompt_config
         self.initUI()
@@ -110,10 +113,10 @@ class CustomDialog(QDialog):
         layout = QVBoxLayout()
 
         self.prompt_editor = QTextEdit()
-        self.target_field_editor = QLineEdit(self.prompt_config["targetField"])
-
-        # Colorize the field names
-        self.colorize_field_names()
+        self.prompt_editor.setPlainText(self.prompt_config["prompt"])
+        self.highlight_fields(self.prompt_editor)
+        self.target_field_editor = QComboBox()
+        self.target_field_editor.addItems(self.get_common_fields())
 
         layout.addWidget(QLabel("Prompt:"))
         layout.addWidget(self.prompt_editor)
@@ -126,36 +129,49 @@ class CustomDialog(QDialog):
         layout.addWidget(run_button)
         self.setLayout(layout)
 
-    def colorize_field_names(self):
-        # Get the prompt text
-        text = self.prompt_config["prompt"]
-
-        # Find the field names and wrap them in HTML tags for color
-        colored_text = re.sub(r'(\{\{\{\w+\}\}\})', r'<span style="color:olive;">\1</span>', text)
-
-        # Set the colored text as HTML to the QTextEdit
-        self.prompt_editor.setHtml(colored_text)
-
-    def run_processing(self):
-        # Update the prompt and target field from the text edit fields
-        self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
-        self.prompt_config["targetField"] = self.target_field_editor.text()
-
-        # Validate the field names in the prompt
-        pattern = re.compile(r'\{\{\{(\w+)\}\}\}')
-        field_names = pattern.findall(self.prompt_config["prompt"])
-
+    def get_common_fields(self):
+        common_fields = set(mw.col.getNote(self.browser.selectedNotes()[0]).keys())
         for nid in self.browser.selectedNotes():
             note = mw.col.getNote(nid)
-            for field_name in field_names:
-                if field_name not in note:
-                    QMessageBox.critical(self, "Invalid Field", f"Field '{field_name}' not found in one or more notes.")
-                    return
+            note_fields = set(note.keys())
+            common_fields = common_fields.intersection(note_fields)
+        return list(common_fields)
 
-        # If validation is successful, process the notes and close the dialog
+    def highlight_fields(self, text_editor):
+        field_pattern = r'\{\{\{(.+?)\}\}\}'
+        field_format = QTextCharFormat()
+        field_format.setForeground(QColor('olive'))
+        cursor = text_editor.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        text_editor.setTextCursor(cursor)
+        while cursor.position() < len(text_editor.toPlainText()):
+            cursor = text_editor.document().find(field_pattern, cursor)
+            if cursor.isNull():
+                break
+            cursor.mergeCharFormat(field_format)
+
+    def run_processing(self):
+        self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
+        self.prompt_config["targetField"] = self.target_field_editor.currentText()
+
+        invalid_fields = check_fields_in_prompt(self.prompt_config["prompt"], self.browser)
+        if invalid_fields:
+            showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
+            return
+
         process_notes(self.browser, self.prompt_config)
         self.close()
-
+def check_fields_in_prompt(prompt, browser):
+    field_pattern = r'\{\{\{(.+?)\}\}\}'
+    field_names = re.findall(field_pattern, prompt)
+    invalid_fields = []
+    for nid in browser.selectedNotes():
+        note = mw.col.getNote(nid)
+        for field_name in field_names:
+            if field_name not in note:
+                if field_name not in invalid_fields:
+                    invalid_fields.append(field_name)
+    return invalid_fields
 
 
 def add_menu_option(browser):
