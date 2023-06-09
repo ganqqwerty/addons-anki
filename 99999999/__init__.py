@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QAction, QMenu
 from aqt import mw
 from aqt.utils import showWarning
 from anki.hooks import addHook
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPlainTextEdit, QLineEdit, QPushButton, QLabel
 
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
@@ -92,6 +93,40 @@ def process_notes(browser, prompt_config):
     else:
         for nid in selected_notes:
             chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
+
+class CustomDialog(QDialog):
+    def __init__(self, browser, prompt_config):
+        super().__init__(browser)
+
+        self.browser = browser
+        self.prompt_config = prompt_config
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self.prompt_config["promptName"])
+        layout = QVBoxLayout()
+
+        self.prompt_editor = QPlainTextEdit(self.prompt_config["prompt"])
+        self.target_field_editor = QLineEdit(self.prompt_config["targetField"])
+
+        layout.addWidget(QLabel("Prompt:"))
+        layout.addWidget(self.prompt_editor)
+        layout.addWidget(QLabel("Target Field:"))
+        layout.addWidget(self.target_field_editor)
+
+        run_button = QPushButton("Run")
+        run_button.clicked.connect(self.run_processing)
+
+        layout.addWidget(run_button)
+        self.setLayout(layout)
+
+    def run_processing(self):
+        self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
+        self.prompt_config["targetField"] = self.target_field_editor.text()
+
+        process_notes(self.browser, self.prompt_config)
+        self.close()
+
 def add_menu_option(browser):
     config = mw.addonManager.getConfig(__name__)
 
@@ -100,7 +135,7 @@ def add_menu_option(browser):
 
     for prompt_config in config['prompts']:
         a = QAction(prompt_config["promptName"], browser)
-        a.triggered.connect(lambda _, prompt_config=prompt_config: process_notes(browser, prompt_config))
+        a.triggered.connect(lambda _, prompt_config=prompt_config: CustomDialog(browser, prompt_config).exec_())
         menu.addAction(a)
 
 addHook("browser.setupMenus", add_menu_option)
