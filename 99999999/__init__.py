@@ -79,7 +79,7 @@ class ChatGPTAddon:
         note.flush()
 
 
-class CustomDialog(QDialog):
+class RunPromptDialog(QDialog):
     def __init__(self, browser, prompt_config):
         super().__init__(browser)
         self.browser = browser
@@ -173,15 +173,8 @@ ADDON_NAME = 'Anki AI Add-on'
 def create_menu_option(browser, config, parent_menu):
     for prompt_config in config['prompts']:
         a = QAction(prompt_config["promptName"], browser)
-        a.triggered.connect(lambda _, prompt_config=prompt_config: CustomDialog(browser, prompt_config).exec_())
+        a.triggered.connect(lambda _, prompt_config=prompt_config: RunPromptDialog(browser, prompt_config).exec_())
         parent_menu.addAction(a)
-
-def add_menu_option(browser):
-    config = mw.addonManager.getConfig(__name__)
-
-    menu = QMenu(ADDON_NAME, browser.form.menuEdit)
-    browser.form.menuEdit.addMenu(menu)
-    create_menu_option(browser, config, menu)
 
 def on_browser_will_show_context_menu(browser, menu):
     config = mw.addonManager.getConfig(__name__)
@@ -191,5 +184,3 @@ def on_browser_will_show_context_menu(browser, menu):
     create_menu_option(browser, config, submenu)
 
 addHook("browser.onContextMenu", on_browser_will_show_context_menu)
-
-addHook("browser.setupMenus", add_menu_option)
