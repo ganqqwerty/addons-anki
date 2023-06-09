@@ -23,7 +23,10 @@ class ChatGPTAddon:
     def generate(self, browser):
         prompt = self.create_prompt(self.note)
         response = self.send_prompt_to_openai(prompt)
-        self.set_response_to_note(response, browser)
+        if browser.editor and browser.editor.note:
+            self.set_response_to_note_in_editor(response, browser.editor)
+        else:
+            self.set_response_to_note(response)
 
     def create_prompt(self, note):
         prompt_template = self.config['prompt']
@@ -38,7 +41,6 @@ class ChatGPTAddon:
     def send_prompt_to_openai(self, prompt):
         if self.config.get('emulate') == 'yes':
             return "This is a fake response for emulation mode."
-
         try:
             response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
             return response.choices[0].text.strip()
@@ -46,7 +48,8 @@ class ChatGPTAddon:
             showWarning(f"An error occurred while processing the note: {str(e)}")
             return None
 
-    def set_response_to_note(self, response, browser):
+    def set_response_to_note(self, response):
+
         if response is None:
             return
 
@@ -55,10 +58,13 @@ class ChatGPTAddon:
             self.note[target_field] = response
         else:
             raise ValueError(f"Target field '{target_field}' not found in note.")
-        if browser.editor and browser.editor.note and browser.editor.note.id == self.note.id:
-            browser.editor.loadNoteKeepingFocus()
-        else:
-            self.note.flush()
+        self.note.flush()
+
+    def set_response_to_note_in_editor(self, response, editor):
+        target_field = self.config['targetField']
+        if target_field in self.note:
+            self.note[target_field] = response
+        editor.loadNoteKeepingFocus()
 
 def process_notes(browser):
     selected_notes = browser.selectedNotes()
@@ -69,6 +75,8 @@ def process_notes(browser):
     config = mw.addonManager.getConfig(__name__)
     for nid in selected_notes:
         note = mw.col.getNote(nid)
+        if browser.editor and browser.editor.note:
+            note = browser.editor.note
         chatGPTAddon = ChatGPTAddon(note, config)
         chatGPTAddon.generate(browser)
 
