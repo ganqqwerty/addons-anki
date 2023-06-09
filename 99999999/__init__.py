@@ -168,27 +168,27 @@ def check_fields_in_prompt(prompt, browser):
                     invalid_fields.append(field_name)
     return invalid_fields
 
-def add_menu_option(browser):
-    config = mw.addonManager.getConfig(__name__)
+ADDON_NAME = 'Anki AI Add-on'
 
-    menu = QMenu('Anki AI Add-on', browser.form.menuEdit)
-    browser.form.menuEdit.addMenu(menu)
-
+def create_menu_option(browser, config, parent_menu):
     for prompt_config in config['prompts']:
         a = QAction(prompt_config["promptName"], browser)
         a.triggered.connect(lambda _, prompt_config=prompt_config: CustomDialog(browser, prompt_config).exec_())
-        menu.addAction(a)
+        parent_menu.addAction(a)
+
+def add_menu_option(browser):
+    config = mw.addonManager.getConfig(__name__)
+
+    menu = QMenu(ADDON_NAME, browser.form.menuEdit)
+    browser.form.menuEdit.addMenu(menu)
+    create_menu_option(browser, config, menu)
 
 def on_browser_will_show_context_menu(browser, menu):
     config = mw.addonManager.getConfig(__name__)
 
-    submenu = QMenu('Anki AI Add-on', menu)
+    submenu = QMenu(ADDON_NAME, menu)
     menu.addMenu(submenu)
-
-    for prompt_config in config['prompts']:
-        a = QAction(prompt_config["promptName"], browser)
-        a.triggered.connect(lambda _, prompt_config=prompt_config: CustomDialog(browser, prompt_config).exec_())
-        submenu.addAction(a)
+    create_menu_option(browser, config, submenu)
 
 addHook("browser.onContextMenu", on_browser_will_show_context_menu)
 
