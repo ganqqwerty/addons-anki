@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import QAction, QMenu
 from aqt import mw
 from aqt.utils import showWarning
 from anki.hooks import addHook
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPlainTextEdit, QLineEdit, QPushButton, QLabel
+from PyQt5.QtWidgets import QTextEdit, QMessageBox, QDialog, QVBoxLayout, QPlainTextEdit, QLineEdit, QPushButton, QLabel
+from PyQt5.QtWidgets import QTextEdit, QMessageBox
 
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
@@ -94,6 +95,8 @@ def process_notes(browser, prompt_config):
         for nid in selected_notes:
             chatGPTAddon.generate_for_multiple_notes(nid, prompt_config)
 
+
+
 class CustomDialog(QDialog):
     def __init__(self, browser, prompt_config):
         super().__init__(browser)
@@ -106,8 +109,11 @@ class CustomDialog(QDialog):
         self.setWindowTitle(self.prompt_config["promptName"])
         layout = QVBoxLayout()
 
-        self.prompt_editor = QPlainTextEdit(self.prompt_config["prompt"])
+        self.prompt_editor = QTextEdit()
         self.target_field_editor = QLineEdit(self.prompt_config["targetField"])
+
+        # Colorize the field names
+        self.colorize_field_names()
 
         layout.addWidget(QLabel("Prompt:"))
         layout.addWidget(self.prompt_editor)
@@ -120,12 +126,37 @@ class CustomDialog(QDialog):
         layout.addWidget(run_button)
         self.setLayout(layout)
 
+    def colorize_field_names(self):
+        # Get the prompt text
+        text = self.prompt_config["prompt"]
+
+        # Find the field names and wrap them in HTML tags for color
+        colored_text = re.sub(r'(\{\{\{\w+\}\}\})', r'<span style="color:olive;">\1</span>', text)
+
+        # Set the colored text as HTML to the QTextEdit
+        self.prompt_editor.setHtml(colored_text)
+
     def run_processing(self):
+        # Update the prompt and target field from the text edit fields
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.text()
 
+        # Validate the field names in the prompt
+        pattern = re.compile(r'\{\{\{(\w+)\}\}\}')
+        field_names = pattern.findall(self.prompt_config["prompt"])
+
+        for nid in self.browser.selectedNotes():
+            note = mw.col.getNote(nid)
+            for field_name in field_names:
+                if field_name not in note:
+                    QMessageBox.critical(self, "Invalid Field", f"Field '{field_name}' not found in one or more notes.")
+                    return
+
+        # If validation is successful, process the notes and close the dialog
         process_notes(self.browser, self.prompt_config)
         self.close()
+
+
 
 def add_menu_option(browser):
     config = mw.addonManager.getConfig(__name__)
