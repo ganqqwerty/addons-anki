@@ -25,7 +25,7 @@ class SettingsWindow(QDialog, Ui_SettingsWindow):
         self.setupUi(self)  # Set up the layout and widgets from the UI file
 
         self.setWindowTitle('ChatGPT Settings')
-        self.setWindowSize()
+        # self.setWindowSize()
 
         config = mw.addonManager.getConfig(__name__)
 

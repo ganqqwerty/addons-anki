@@ -2,13 +2,22 @@
 <ui version="4.0">
  <class>SettingsWindow</class>
  <widget class="QDialog" name="SettingsWindow">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>326</height>
+    <width>805</width>
+    <height>800</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>ChatGPT Settings</string>
@@ -78,8 +87,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>374</width>
-        <height>119</height>
+        <width>779</width>
+        <height>605</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="promptsLayout"/>

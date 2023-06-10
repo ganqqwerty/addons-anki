@@ -14,7 +14,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_SettingsWindow(object):
     def setupUi(self, SettingsWindow):
         SettingsWindow.setObjectName("SettingsWindow")
-        SettingsWindow.resize(400, 326)
+        SettingsWindow.setWindowModality(QtCore.Qt.NonModal)
+        SettingsWindow.resize(805, 800)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(SettingsWindow.sizePolicy().hasHeightForWidth())
+        SettingsWindow.setSizePolicy(sizePolicy)
         self.verticalLayout = QtWidgets.QVBoxLayout(SettingsWindow)
         self.verticalLayout.setObjectName("verticalLayout")
         self.labelApiKey = QtWidgets.QLabel(SettingsWindow)
@@ -48,7 +54,7 @@ class Ui_SettingsWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 374, 119))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 779, 605))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.promptsLayout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.promptsLayout.setObjectName("promptsLayout")
