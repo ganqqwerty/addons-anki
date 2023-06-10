@@ -38,6 +38,6 @@ from aqt.qt import *
 
 def openSettings():
     window = SettingsWindow(mw)
-    window.exec_()
+    window.exec()
 
 mw.addonManager.setConfigAction(__name__, openSettings)

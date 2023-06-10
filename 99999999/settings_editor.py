@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QLabel, QComboBox, 
     QTextEdit
 from aqt import mw
 from aqt.utils import showInfo
+from aqt.qt import *
 
 
 class SettingsWindow(QDialog):
@@ -10,6 +11,12 @@ class SettingsWindow(QDialog):
 
         self.setWindowTitle('ChatGPT Settings')
         self.setLayout(QVBoxLayout())
+
+        # Get screen size
+        screen_size = QGuiApplication.primaryScreen().geometry()
+
+        # Set window size to be 80% of screen width
+        self.resize(screen_size.width() * 0.8, screen_size.height() * 0.8)
 
         config = mw.addonManager.getConfig(__name__)
 
@@ -28,8 +35,8 @@ class SettingsWindow(QDialog):
         self.promptsTable = QTableWidget()
         self.promptsTable.setColumnCount(3)
         self.promptsTable.setHorizontalHeaderLabels(["Prompt", "Target Field", "Prompt Name"])
-        self.promptsTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.promptsTable.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.promptsTable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.promptsTable.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         for i, prompt in enumerate(config["prompts"]):
             self.add_prompt_inputs(i, prompt)
