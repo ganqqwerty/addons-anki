@@ -1,10 +1,16 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QLabel, QComboBox, QPushButton, QTextEdit, \
-    QSizePolicy, QHBoxLayout, QToolButton, QStyle
+from PyQt5.QtWidgets import QFrame, QSizePolicy
+from PyQt5.QtWidgets import QVBoxLayout, QLineEdit, QLabel, QComboBox, QPushButton, QHBoxLayout, QToolButton
 from aqt import mw
-from aqt.utils import showInfo
 from aqt.qt import *
-from aqt import mw
-from PyQt5.QtWidgets import QFrame, QSizePolicy, QStyle
+from aqt.utils import showInfo
+from .prompt_ui import Ui_Form  # import the class from your generated Python file
+
+
+class PromptWidget(QWidget, Ui_Form):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)  # this sets up the layout and widgets according to your design
+
 
 class SettingsWindow(QDialog):
     def __init__(self, parent=None):
@@ -44,7 +50,7 @@ class SettingsWindow(QDialog):
         self.emulate.addItem("yes")
         self.emulate.addItem("no")
         self.emulate.setCurrentText(config["emulate"])
-        self.emulate.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Policy.Preferred)
+        self.emulate.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
         self.layout().addWidget(QLabel("Emulate:"))
         self.layout().addWidget(self.emulate)
 
@@ -52,33 +58,22 @@ class SettingsWindow(QDialog):
         self.promptWidgets = []
         for i, prompt in enumerate(config["prompts"]):
             self.add_prompt_inputs(i, prompt)
-
         self.addPromptButton = QPushButton('Add Prompt')
         self.addPromptButton.clicked.connect(self.add_prompt)
-        self.addPromptButton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Policy.Preferred)
         self.layout().addWidget(self.addPromptButton)
 
     def add_prompt_inputs(self, i, prompt=None):
-        prompt = prompt or {"prompt": "", "targetField": "", "promptName": ""}
-        promptNameLabel, promptNameInput, promptLabel, promptInput, targetFieldLabel, targetFieldInput = self.create_prompt_widgets(prompt)
-        removePromptButton = self.create_remove_button()
-        singlePromptLayout = self.create_single_prompt_layout(promptNameLabel, promptNameInput, promptLabel, promptInput, targetFieldLabel, targetFieldInput, removePromptButton)
-        self.promptWidgets.append(
-            (singlePromptLayout, promptNameInput, promptInput, targetFieldInput, removePromptButton))
-        removePromptButton.clicked.connect(lambda: self.remove_prompt(singlePromptLayout))
+        if prompt is None:
+            prompt = {"prompt": "", "targetField": "", "promptName": ""}
 
+        promptWidget = PromptWidget()
+        promptWidget.promptInput.setPlainText(prompt["prompt"])
+        promptWidget.targetFieldInput.setText(prompt["targetField"])
+        promptWidget.promptNameInput.setText(prompt["promptName"])
+        promptWidget.removePromptButton.clicked.connect(lambda: self.remove_prompt(promptWidget))
 
-    def create_prompt_widgets(self, prompt):
-        promptNameLabel = QLabel("Prompt Name:")
-        promptNameInput = QLineEdit(prompt["promptName"])
-
-        promptLabel = QLabel("Prompt:")
-        promptInput = QTextEdit(prompt["prompt"])
-
-        targetFieldLabel = QLabel("Target Field:")
-        targetFieldInput = QLineEdit(prompt["targetField"])
-
-        return promptNameLabel, promptNameInput, promptLabel, promptInput, targetFieldLabel, targetFieldInput
+        self.layout().insertWidget(i, promptWidget)
+        self.promptWidgets.append(promptWidget)
 
 
     def create_remove_button(self):
@@ -91,8 +86,8 @@ class SettingsWindow(QDialog):
         removePromptButton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Policy.Preferred)
         return removePromptButton
 
-
-    def create_single_prompt_layout(self, promptNameLabel, promptNameInput, promptLabel, promptInput, targetFieldLabel, targetFieldInput, removePromptButton):
+    def create_single_prompt_layout(self, promptNameLabel, promptNameInput, promptLabel, promptInput, targetFieldLabel,
+                                    targetFieldInput, removePromptButton):
         promptLayout = QVBoxLayout()
         promptLayout.addWidget(promptNameLabel)
         promptLayout.addWidget(promptNameInput)
@@ -118,22 +113,18 @@ class SettingsWindow(QDialog):
         # Before adding a new prompt, add a separator
         if self.promptWidgets:
             separator = QFrame()
-            separator.setFrameShape(QFrame.HLine)
-            separator.setFrameShadow(QFrame.Sunken)
+            separator.setFrameShape(QFrame.Shape.HLine)
+            separator.setFrameShadow(QFrame.Shadow.Sunken)
             self.layout().addWidget(separator)
         self.add_prompt_inputs(len(self.promptWidgets))
 
-
-    def remove_prompt(self, frame):
-        for i, widgets in enumerate(self.promptWidgets):
-            if widgets[0] == frame:
-                # remove widgets
-                for widget in widgets[1:]:
-                    widget.deleteLater()
+    def remove_prompt(self, promptWidgetToRemove):
+        for i, promptWidget in enumerate(self.promptWidgets):
+            if promptWidget == promptWidgetToRemove:
+                # remove widget
+                promptWidget.deleteLater()
                 # remove from list
                 self.promptWidgets.pop(i)
-                # remove frame
-                frame.deleteLater()
                 break
 
 
@@ -143,10 +134,10 @@ class SettingsWindow(QDialog):
         config["emulate"] = self.emulate.currentText()
 
         config["prompts"] = []
-        for widgets in self.promptWidgets:
-            promptInput = widgets[2]
-            targetFieldInput = widgets[3]
-            promptNameInput = widgets[4]
+        for promptWidget in self.promptWidgets:
+            promptInput = promptWidget.promptInput
+            targetFieldInput = promptWidget.targetFieldInput
+            promptNameInput = promptWidget.promptNameInput
 
             config["prompts"].append({
                 "prompt": promptInput.toPlainText(),
