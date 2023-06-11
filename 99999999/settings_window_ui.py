@@ -74,7 +74,7 @@ class Ui_SettingsWindow(object):
 
     def retranslateUi(self, SettingsWindow):
         _translate = QtCore.QCoreApplication.translate
-        SettingsWindow.setWindowTitle(_translate("SettingsWindow", "ChatGPT Settings"))
+        SettingsWindow.setWindowTitle(_translate("SettingsWindow", "IntelliFiller Settings"))
         self.labelApiKey.setText(_translate("SettingsWindow", "API Key:"))
         self.apiKey.setPlaceholderText(_translate("SettingsWindow", "API key"))
         self.labelEmulate.setText(_translate("SettingsWindow", "Emulate:"))
