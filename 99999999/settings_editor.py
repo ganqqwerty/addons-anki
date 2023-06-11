@@ -5,7 +5,7 @@ from aqt.utils import showInfo
 
 from .prompt_ui import Ui_Form  # Import the class from your generated Python file
 from .settings_window_ui import Ui_SettingsWindow
-
+import json
 
 class PromptWidget(QWidget, Ui_Form):
     def __init__(self, parent=None):
@@ -67,6 +67,9 @@ class SettingsWindow(QDialog, Ui_SettingsWindow):
 
     def saveConfig(self):
         config = mw.addonManager.getConfig(__name__)
+        print("existing config")
+        print(json.dumps(config, indent=4))
+
         config["apiKey"] = self.apiKey.text()
         config["emulate"] = self.emulate.currentText()
 
@@ -82,6 +85,8 @@ class SettingsWindow(QDialog, Ui_SettingsWindow):
                 "promptName": promptNameInput.text()
             })
 
+        print ("config right before write")
+        print(json.dumps(config, indent=4))
         mw.addonManager.writeConfig(__name__, config)
         showInfo("Configuration saved.")
         self.close()

@@ -10,6 +10,8 @@ sys.path.append(vendor_dir)
 import openai
 
 config = mw.addonManager.getConfig(__name__)
+print(config)
+
 openai.api_key = config['apiKey']
 
 from html import unescape
@@ -32,7 +34,7 @@ def create_prompt(note, prompt_config):
 
 def send_prompt_to_openai(prompt):
     if config.get('emulate') == 'yes':
-        return "This is a fake response for emulation mode."
+        return f"This is a fake response for emulation mode for the prompt {prompt}."
 
     try:
         print("Request to chatgpt: ", prompt)

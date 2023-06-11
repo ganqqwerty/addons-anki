@@ -10,7 +10,7 @@ from .process_notes import process_notes
 from .run_prompt_dialog import RunPromptDialog
 
 
-ADDON_NAME = 'Anki AI Add-on'
+ADDON_NAME = 'IntelliFiller'
 
 
 def create_run_prompt_dialog(browser, prompt_config):

@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>ChatGPT Settings</string>
+   <string>IntelliFiller Settings</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
