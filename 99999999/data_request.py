@@ -9,10 +9,7 @@ vendor_dir = os.path.join(addon_dir, "vendor")
 sys.path.append(vendor_dir)
 import openai
 
-config = mw.addonManager.getConfig(__name__)
-print(config)
 
-openai.api_key = config['apiKey']
 
 from html import unescape
 
@@ -33,13 +30,17 @@ def create_prompt(note, prompt_config):
 
 
 def send_prompt_to_openai(prompt):
-    if config.get('emulate') == 'yes':
+    config = mw.addonManager.getConfig(__name__)
+    if config['emulate'] == 'yes':
+        print("Fake request chatgpt: ", prompt)
         return f"This is a fake response for emulation mode for the prompt {prompt}."
 
     try:
         print("Request to chatgpt: ", prompt)
+        openai.api_key = config['apiKey']
         response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=2000)
         return response.choices[0].text.strip()
+
     except Exception as e:
         showWarning(f"An error occurred while processing the note: {str(e)}")
         return None
