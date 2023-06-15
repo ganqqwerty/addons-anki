@@ -82,7 +82,7 @@ def generate_for_multiple_notes(nid, prompt_config):
     note = mw.col.get_note(nid)
     prompt = create_prompt(note, prompt_config)
     response = send_prompt_to_openai(prompt)
-    fill_field_for_note_not_in_editor(response, note, prompt_config)
+    fill_field_for_note_not_in_editor(response, note, prompt_config['targetField'])
 
 
 def process_notes(browser, prompt_config):

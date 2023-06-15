@@ -23,7 +23,7 @@ def create_prompt(note, prompt_config):
             raise ValueError(f"Field '{field_name}' not found in note.")
         prompt_template = prompt_template.replace(f'{{{{{{{field_name}}}}}}}', note[field_name])
     # unescape HTML entities and replace line breaks with spaces
-    prompt_template = unescape(prompt_template).replace('<br>', ' ')
+    prompt_template = unescape(prompt_template)
     # remove HTML tags
     prompt_template = re.sub('<.*?>', '', prompt_template)
     return prompt_template
@@ -36,10 +36,11 @@ def send_prompt_to_openai(prompt):
         return f"This is a fake response for emulation mode for the prompt {prompt}."
 
     try:
-        print("Request to chatgpt: ", prompt)
+        print("Request to ChatGPT: ", prompt)
         openai.api_key = config['apiKey']
-        response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=2000)
-        return response.choices[0].text.strip()
+        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}], max_tokens=2000)
+        print("Response from ChatGPT", response)
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
         showWarning(f"An error occurred while processing the note: {str(e)}")
