@@ -1,7 +1,12 @@
-# addons-anki
+# IntelliFiller ChatGPT addon for Anki
 
-### Features 
+## Features 
+
+### Editor button
+
 This add-on allows you to autofill your cards using ChatGPT. 
+![editor-button.png](editor-button.png)
+![run-request.png](run-request.png)
 
 Pick a field from your card and use its name in your ChatGPT prompt, for example: 
 
@@ -13,21 +18,30 @@ You can use multiple fields, too, for example:
 
 >Is the word {{{Word}}} used in a literate or figurative sence in the following sentence? {{{Sentence}}}
 
+### Fill multiple cards
 You can pick multiple cards and ask ChatGPT to fill their fields! 
+
+In the cards browser use Shift key to pick multiple cards. Then right click on them and pick the IntelliFiller menu. You will see the list of prompts. 
+
+![multiple-cards.png](multiple-cards.png)
+
+### Save your prompts
 
 You can save the prompts you like and reuse them later.
 
-### Installation
+![save-prompts.png](save-prompts.png)
 
-You will need to get ChatGPT API key, you can get it here:
+## Installation
 
-### Cost
+You will need to get ChatGPT API key, you will need to sign up in OpenAI and get it here: https://platform.openai.com/account/api-keys
+
+
+![installation.png](installation.png)
+
+
+## Cost
 
 Each request to ChatGPT API costs 	$0.002 , so you should not spend more than a couple of bucks on average-size deck. All money goes to ChatGPT, not me 😭. 
 
 https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key
-
-
-![CleanShot 2023-06-11 at 23 54 37@2x](https://github.com/ganqqwerty/addons-anki/assets/697308/f41603ac-97aa-440f-889a-54c186d0b9c7)
-![CleanShot 2023-06-11 at 23 47 27@2x](https://github.com/ganqqwerty/addons-anki/assets/697308/5d801363-91e2-4781-884c-054ac74fd961)
 
