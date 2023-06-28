@@ -33,6 +33,8 @@ You can save the prompts you like and reuse them later.
 
 ## Installation
 
+Don't forget to restart anki after you installed the Add-on! 
+
 You will need to get ChatGPT API key, you will need to sign up in OpenAI and get it here: https://platform.openai.com/account/api-keys
 
 
