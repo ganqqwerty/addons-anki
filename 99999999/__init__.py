@@ -30,35 +30,37 @@ def create_run_prompt_dialog_from_browser(browser, prompt_config):
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
 
+def handle_browser_mode(editor: Editor, prompt_config):
+    browser: Browser = editor.parentWindow
+    common_fields = get_common_fields(browser.selectedNotes())
+    dialog = RunPromptDialog(browser, common_fields, prompt_config)
+    if dialog.exec_() == QDialog.DialogCode.Accepted:
+        updated_prompt_config = dialog.get_result()
+        process_notes(browser, updated_prompt_config)
+
+def handle_edit_current_mode(editor: Editor, prompt_config):
+    editCurrentWindow: EditCurrent = editor.parentWindow
+    common_fields = get_common_fields([editor.note.id])
+    dialog = RunPromptDialog(editCurrentWindow, common_fields, prompt_config)
+    if dialog.exec_() == QDialog.DialogCode.Accepted:
+        updated_prompt_config = dialog.get_result()
+        generate_for_single_note(editor, updated_prompt_config)
+
+def handle_add_cards_mode(editor: Editor, prompt_config):
+    addCardsWindow: AddCards = editor.parentWindow
+    keys = editor.note.keys()
+    dialog = RunPromptDialog(addCardsWindow, keys, prompt_config)
+    if dialog.exec_() == QDialog.DialogCode.Accepted:
+        updated_prompt_config = dialog.get_result()
+        generate_for_single_note(editor, updated_prompt_config)
+
 def create_run_prompt_dialog_from_editor(editor: Editor, prompt_config):
-    '''parentWindow can be either Browser (when we are viewing the list of cards) or EditCurrent when we click edit
-    button while we are reviewing cards. See EditorMode for details '''
     if editor.editorMode == EditorMode.BROWSER:
-        browser: Browser = editor.parentWindow
-        common_fields = get_common_fields(browser.selectedNotes())
-        dialog = RunPromptDialog(browser, common_fields, prompt_config)
-        if dialog.exec_() == QDialog.DialogCode.Accepted:
-            updated_prompt_config = dialog.get_result()
-            process_notes(browser, updated_prompt_config)
-        return
-    if editor.editorMode == EditorMode.EDIT_CURRENT:
-        editCurrentWindow: EditCurrent = editor.parentWindow
-        common_fields = get_common_fields([editor.note.id])
-        dialog = RunPromptDialog(editCurrentWindow, common_fields, prompt_config)
-        if dialog.exec_() == QDialog.DialogCode.Accepted:
-            updated_prompt_config = dialog.get_result()
-            generate_for_single_note(editor, updated_prompt_config)
-        return
-    if editor.editorMode == EditorMode.ADD_CARDS:
-        addCardsWindow: AddCards = editor.parentWindow
-        keys = editor.note.keys()
-        values = editor.note.values()
-        dialog = RunPromptDialog(addCardsWindow, keys, prompt_config)
-        if dialog.exec_() == QDialog.DialogCode.Accepted:
-            updated_prompt_config = dialog.get_result()
-            generate_for_single_note(editor, updated_prompt_config)
-
-
+        handle_browser_mode(editor, prompt_config)
+    elif editor.editorMode == EditorMode.EDIT_CURRENT:
+        handle_edit_current_mode(editor, prompt_config)
+    elif editor.editorMode == EditorMode.ADD_CARDS:
+        handle_add_cards_mode(editor, prompt_config)
 
 def add_context_menu_items(browser, menu):
     submenu = QMenu(ADDON_NAME, menu)
