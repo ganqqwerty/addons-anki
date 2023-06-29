@@ -43,7 +43,9 @@ class RunPromptDialog(QDialog):
 
         invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.possible_fields)
         if invalid_fields:
-            showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
+            showWarning("Some fields in your prompt do not exist in the notes: " + ", ".join(invalid_fields)
+                        + "\nMake sure that you only use these fields " + ", ".join(self.possible_fields)
+                        + "\nDouble-check the capital letters.")
             return
 
         self.result = self.prompt_config
