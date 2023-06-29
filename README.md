@@ -35,7 +35,7 @@ You can save the prompts you like and reuse them later.
 
 Don't forget to restart anki after you installed the Add-on! 
 
-You will need to get ChatGPT API key, you will need to sign up in OpenAI and get it here: https://platform.openai.com/account/api-keys
+You will need to get ChatGPT API key, you will need to sign up in OpenAI and [get it here](https://platform.openai.com/account/api-keys)
 
 
 ![installation.png](installation.png)
@@ -45,5 +45,4 @@ You will need to get ChatGPT API key, you will need to sign up in OpenAI and get
 
 Each request to ChatGPT API costs 	$0.002 , so you should not spend more than a couple of bucks on average-size deck. All money goes to ChatGPT, not me 😭. 
 
-https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key
 

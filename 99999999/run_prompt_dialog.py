@@ -6,8 +6,8 @@ from aqt.utils import showWarning
 
 
 class RunPromptDialog(QDialog):
-    def __init__(self, parent, selected_nodes, prompt_config):
-        super().__init__(parent)
+    def __init__(self, parentWindow, selected_nodes, prompt_config):
+        super().__init__(parentWindow)
         self.selected_nodes = selected_nodes
         self.result = None
         self.prompt_config = prompt_config

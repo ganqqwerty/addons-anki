@@ -13,11 +13,13 @@ from .run_prompt_dialog import RunPromptDialog
 ADDON_NAME = 'IntelliFiller'
 
 
-def create_run_prompt_dialog(browser, prompt_config):
-    dialog = RunPromptDialog(browser, browser.selectedNotes(), prompt_config)
+def create_run_prompt_dialog(parentWindow, prompt_config):
+    '''parentWindow can be either Browser (when we are viewing the list of cards) or EditCurrent when we click edit
+    button while we are reviewing cards. See EditorMode for details '''
+    dialog = RunPromptDialog(parentWindow, parentWindow.selectedNotes(), prompt_config)
     if dialog.exec_() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
-        process_notes(browser, updated_prompt_config)
+        process_notes(parentWindow, updated_prompt_config)
 
 
 def add_context_menu_items(browser, menu):
