@@ -6,10 +6,10 @@ from aqt.utils import showWarning
 
 
 class RunPromptDialog(QDialog):
-    def __init__(self, parentWindow, selected_nodes_ids, prompt_config):
+    def __init__(self, parentWindow, common_fields, prompt_config):
         super().__init__(parentWindow)
-        self.selected_nodes_ids = selected_nodes_ids
         self.result = None
+        self.common_fields = common_fields
         self.prompt_config = prompt_config
         self.setupLayout()
 
@@ -21,7 +21,7 @@ class RunPromptDialog(QDialog):
         self.prompt_editor.setPlainText(self.prompt_config["prompt"])
 
         self.target_field_editor = QComboBox()
-        self.common_fields = get_common_fields(self.selected_nodes_ids)
+
         self.target_field_editor.addItems(self.common_fields)
         if self.prompt_config["targetField"] in self.common_fields:
             self.target_field_editor.setCurrentText(self.prompt_config["targetField"])

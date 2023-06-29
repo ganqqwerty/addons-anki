@@ -10,7 +10,7 @@ import os
 
 from .settings_editor import SettingsWindow
 from .process_notes import process_notes, generate_for_single_note
-from .run_prompt_dialog import RunPromptDialog
+from .run_prompt_dialog import RunPromptDialog, get_common_fields
 from aqt.utils import showWarning
 
 
@@ -19,7 +19,8 @@ ADDON_NAME = 'IntelliFiller'
 
 
 def create_run_prompt_dialog_from_browser(browser, prompt_config):
-    dialog = RunPromptDialog(browser, browser.selectedNotes(), prompt_config)
+    common_fields = get_common_fields(browser.selectedNotes())
+    dialog = RunPromptDialog(browser, common_fields, prompt_config)
     if dialog.exec_() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
@@ -29,14 +30,17 @@ def create_run_prompt_dialog_from_editor(editor: Editor, prompt_config):
     button while we are reviewing cards. See EditorMode for details '''
     if editor.editorMode == EditorMode.BROWSER:
         browser: Browser = editor.parentWindow
-        dialog = RunPromptDialog(browser, browser.selectedNotes(), prompt_config)
+
+        common_fields = get_common_fields(browser.selectedNotes())
+        dialog = RunPromptDialog(browser, common_fields, prompt_config)
         if dialog.exec_() == QDialog.DialogCode.Accepted:
             updated_prompt_config = dialog.get_result()
             process_notes(browser, updated_prompt_config)
         return
     if editor.editorMode == EditorMode.EDIT_CURRENT:
         editCurrentWindow: EditCurrent = editor.parentWindow
-        dialog = RunPromptDialog(editCurrentWindow, [editor.note.id], prompt_config )
+        common_fields = get_common_fields([editor.note.id])
+        dialog = RunPromptDialog(editCurrentWindow, common_fields, prompt_config )
         if dialog.exec_() == QDialog.DialogCode.Accepted:
             updated_prompt_config = dialog.get_result()
             generate_for_single_note(editor, updated_prompt_config)
