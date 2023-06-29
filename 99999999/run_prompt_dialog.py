@@ -6,10 +6,10 @@ from aqt.utils import showWarning
 
 
 class RunPromptDialog(QDialog):
-    def __init__(self, parentWindow, common_fields, prompt_config):
+    def __init__(self, parentWindow, possible_fields, prompt_config):
         super().__init__(parentWindow)
         self.result = None
-        self.common_fields = common_fields
+        self.possible_fields = possible_fields
         self.prompt_config = prompt_config
         self.setupLayout()
 
@@ -22,8 +22,8 @@ class RunPromptDialog(QDialog):
 
         self.target_field_editor = QComboBox()
 
-        self.target_field_editor.addItems(self.common_fields)
-        if self.prompt_config["targetField"] in self.common_fields:
+        self.target_field_editor.addItems(self.possible_fields)
+        if self.prompt_config["targetField"] in self.possible_fields:
             self.target_field_editor.setCurrentText(self.prompt_config["targetField"])
 
         layout.addWidget(QLabel("Prompt:"))
@@ -41,7 +41,7 @@ class RunPromptDialog(QDialog):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
-        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.common_fields)
+        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.possible_fields)
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
@@ -53,11 +53,11 @@ class RunPromptDialog(QDialog):
         return self.result
 
 
-def get_invalid_fields_in_prompt(prompt, common_field_names):
+def get_invalid_fields_in_prompt(prompt, valid_field_names):
     field_pattern = r'\{\{\{(.+?)\}\}\}'
     prompt_field_names = re.findall(field_pattern, prompt)
     pf_names_set = set(prompt_field_names)
-    cf_names_set = set(common_field_names)
+    cf_names_set = set(valid_field_names)
     return pf_names_set.difference(cf_names_set)
 
 
