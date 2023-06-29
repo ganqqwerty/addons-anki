@@ -21,9 +21,9 @@ class RunPromptDialog(QDialog):
         self.prompt_editor.setPlainText(self.prompt_config["prompt"])
 
         self.target_field_editor = QComboBox()
-        common_fields = get_common_fields(self.selected_nodes_ids)
-        self.target_field_editor.addItems(common_fields)
-        if self.prompt_config["targetField"] in common_fields:
+        self.common_fields = get_common_fields(self.selected_nodes_ids)
+        self.target_field_editor.addItems(self.common_fields)
+        if self.prompt_config["targetField"] in self.common_fields:
             self.target_field_editor.setCurrentText(self.prompt_config["targetField"])
 
         layout.addWidget(QLabel("Prompt:"))
@@ -41,7 +41,7 @@ class RunPromptDialog(QDialog):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
-        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.selected_nodes_ids)
+        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.common_fields)
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
@@ -53,17 +53,12 @@ class RunPromptDialog(QDialog):
         return self.result
 
 
-def get_invalid_fields_in_prompt(prompt, selected_notes):
+def get_invalid_fields_in_prompt(prompt, common_field_names):
     field_pattern = r'\{\{\{(.+?)\}\}\}'
-    field_names = re.findall(field_pattern, prompt)
-    invalid_fields = []
-    for nid in selected_notes:
-        note = mw.col.getNote(nid)
-        for field_name in field_names:
-            if field_name not in note:
-                if field_name not in invalid_fields:
-                    invalid_fields.append(field_name)
-    return invalid_fields
+    prompt_field_names = re.findall(field_pattern, prompt)
+    pf_names_set = set(prompt_field_names)
+    cf_names_set = set(common_field_names)
+    return pf_names_set.difference(cf_names_set)
 
 
 def get_common_fields(selected_nodes_ids):
