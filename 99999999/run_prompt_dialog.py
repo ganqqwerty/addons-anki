@@ -60,11 +60,3 @@ def get_invalid_fields_in_prompt(prompt, valid_field_names):
     cf_names_set = set(valid_field_names)
     return pf_names_set.difference(cf_names_set)
 
-
-def get_common_fields(selected_nodes_ids):
-    common_fields = set(mw.col.getNote(selected_nodes_ids[0]).keys())
-    for nid in selected_nodes_ids:
-        note = mw.col.getNote(nid)
-        note_fields = set(note.keys())
-        common_fields = common_fields.intersection(note_fields)
-    return list(common_fields)

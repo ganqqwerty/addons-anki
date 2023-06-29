@@ -10,13 +10,21 @@ import os
 
 from .settings_editor import SettingsWindow
 from .process_notes import process_notes, generate_for_single_note
-from .run_prompt_dialog import RunPromptDialog, get_common_fields
+from .run_prompt_dialog import RunPromptDialog
 from aqt.utils import showWarning
 
 
 
 ADDON_NAME = 'IntelliFiller'
 
+
+def get_common_fields(selected_nodes_ids):
+    common_fields = set(mw.col.getNote(selected_nodes_ids[0]).keys())
+    for nid in selected_nodes_ids:
+        note = mw.col.getNote(nid)
+        note_fields = set(note.keys())
+        common_fields = common_fields.intersection(note_fields)
+    return list(common_fields)
 
 def create_run_prompt_dialog_from_browser(browser, prompt_config):
     common_fields = get_common_fields(browser.selectedNotes())
