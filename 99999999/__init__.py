@@ -11,6 +11,8 @@ import os
 from .settings_editor import SettingsWindow
 from .process_notes import process_notes, generate_for_single_note
 from .run_prompt_dialog import RunPromptDialog
+from aqt.utils import showWarning
+
 
 
 ADDON_NAME = 'IntelliFiller'
@@ -41,7 +43,11 @@ def create_run_prompt_dialog_from_editor(editor: Editor, prompt_config):
         return
     if editor.editorMode == EditorMode.ADD_CARDS:
         addCardsWindow: AddCards
-        pass
+        keys = editor.note.keys()
+        values = editor.note.values()
+        showWarning("I can't call ChatGPT for the newly created notes. However soon it will be possible!!!")
+
+    pass
 
 
 

@@ -21,8 +21,9 @@ class RunPromptDialog(QDialog):
         self.prompt_editor.setPlainText(self.prompt_config["prompt"])
 
         self.target_field_editor = QComboBox()
-        self.target_field_editor.addItems(self.get_common_fields())
-        if self.prompt_config["targetField"] in self.get_common_fields():
+        common_fields = self.get_common_fields()
+        self.target_field_editor.addItems(common_fields)
+        if self.prompt_config["targetField"] in common_fields:
             self.target_field_editor.setCurrentText(self.prompt_config["targetField"])
 
         layout.addWidget(QLabel("Prompt:"))
