@@ -6,14 +6,14 @@ from aqt.utils import showWarning
 
 
 class RunPromptDialog(QDialog):
-    def __init__(self, parentWindow, selected_nodes, prompt_config):
+    def __init__(self, parentWindow, selected_nodes_ids, prompt_config):
         super().__init__(parentWindow)
-        self.selected_nodes = selected_nodes
+        self.selected_nodes_ids = selected_nodes_ids
         self.result = None
         self.prompt_config = prompt_config
-        self.initUI()
+        self.setupLayout()
 
-    def initUI(self):
+    def setupLayout(self):
         self.setWindowTitle(self.prompt_config["promptName"])
         layout = QVBoxLayout()
 
@@ -21,7 +21,7 @@ class RunPromptDialog(QDialog):
         self.prompt_editor.setPlainText(self.prompt_config["prompt"])
 
         self.target_field_editor = QComboBox()
-        common_fields = self.get_common_fields()
+        common_fields = get_common_fields(self.selected_nodes_ids)
         self.target_field_editor.addItems(common_fields)
         if self.prompt_config["targetField"] in common_fields:
             self.target_field_editor.setCurrentText(self.prompt_config["targetField"])
@@ -37,19 +37,11 @@ class RunPromptDialog(QDialog):
         layout.addWidget(run_button)
         self.setLayout(layout)
 
-    def get_common_fields(self):
-        common_fields = set(mw.col.getNote(self.selected_nodes[0]).keys())
-        for nid in self.selected_nodes:
-            note = mw.col.getNote(nid)
-            note_fields = set(note.keys())
-            common_fields = common_fields.intersection(note_fields)
-        return list(common_fields)
-
     def try_to_accept(self):
         self.prompt_config["prompt"] = self.prompt_editor.toPlainText()
         self.prompt_config["targetField"] = self.target_field_editor.currentText()
 
-        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.selected_nodes)
+        invalid_fields = get_invalid_fields_in_prompt(self.prompt_config["prompt"], self.selected_nodes_ids)
         if invalid_fields:
             showWarning("Invalid field(s) in prompt: " + ", ".join(invalid_fields))
             return
@@ -72,3 +64,12 @@ def get_invalid_fields_in_prompt(prompt, selected_notes):
                 if field_name not in invalid_fields:
                     invalid_fields.append(field_name)
     return invalid_fields
+
+
+def get_common_fields(selected_nodes_ids):
+    common_fields = set(mw.col.getNote(selected_nodes_ids[0]).keys())
+    for nid in selected_nodes_ids:
+        note = mw.col.getNote(nid)
+        note_fields = set(note.keys())
+        common_fields = common_fields.intersection(note_fields)
+    return list(common_fields)
