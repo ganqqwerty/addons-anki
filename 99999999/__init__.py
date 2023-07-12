@@ -42,7 +42,7 @@ def handle_browser_mode(editor: Editor, prompt_config):
         process_notes(browser, updated_prompt_config)
 
 
-def handle_add_cards_mode(editor: Editor, prompt_config):
+def handle_no_browser_mode(editor: Editor, prompt_config):
     """during edit current mode, the browser is not available, also the card does not yet have its own id."""
     addCardsWindow: AddCards = editor.parentWindow
     keys = editor.note.keys()
@@ -56,7 +56,7 @@ def create_run_prompt_dialog_from_editor(editor: Editor, prompt_config):
     if editor.editorMode == EditorMode.BROWSER:
         handle_browser_mode(editor, prompt_config)
     elif editor.editorMode == EditorMode.EDIT_CURRENT or editor.editorMode == EditorMode.ADD_CARDS:
-        handle_add_cards_mode(editor, prompt_config)
+        handle_no_browser_mode(editor, prompt_config)
 
 
 def add_context_menu_items(browser, menu):
