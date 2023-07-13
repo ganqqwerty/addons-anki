@@ -3,15 +3,12 @@ from aqt.qt import *
 from aqt.gui_hooks import editor_did_init_buttons
 from aqt.editor import EditorMode, Editor
 from aqt.browser import Browser
-from aqt.editcurrent import EditCurrent
-from aqt.addcards import AddCards
 from anki.hooks import addHook
 import os
 
 from .settings_editor import SettingsWindow
 from .process_notes import process_notes, generate_for_single_note
 from .run_prompt_dialog import RunPromptDialog
-from aqt.utils import showWarning
 
 ADDON_NAME = 'IntelliFiller'
 
@@ -28,7 +25,7 @@ def get_common_fields(selected_nodes_ids):
 def create_run_prompt_dialog_from_browser(browser, prompt_config):
     common_fields = get_common_fields(browser.selectedNotes())
     dialog = RunPromptDialog(browser, common_fields, prompt_config)
-    if dialog.exec_() == QDialog.DialogCode.Accepted:
+    if dialog.exec() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
 
@@ -37,17 +34,17 @@ def handle_browser_mode(editor: Editor, prompt_config):
     browser: Browser = editor.parentWindow
     common_fields = get_common_fields(browser.selectedNotes())
     dialog = RunPromptDialog(browser, common_fields, prompt_config)
-    if dialog.exec_() == QDialog.DialogCode.Accepted:
+    if dialog.exec() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
 
 
 def handle_no_browser_mode(editor: Editor, prompt_config):
     """during edit current mode, the browser is not available, also the card does not yet have its own id."""
-    addCardsWindow: AddCards = editor.parentWindow
+    parentWindowOfEditor = editor.parentWindow
     keys = editor.note.keys()
-    dialog = RunPromptDialog(addCardsWindow, keys, prompt_config)
-    if dialog.exec_() == QDialog.DialogCode.Accepted:
+    dialog = RunPromptDialog(parentWindowOfEditor, keys, prompt_config)
+    if dialog.exec() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         generate_for_single_note(editor, updated_prompt_config)
 
@@ -72,7 +69,7 @@ def add_context_menu_items(browser, menu):
 
 def open_settings():
     window = SettingsWindow(mw)
-    window.exec_()
+    window.exec()
 
 
 def on_editor_button(editor):
@@ -84,7 +81,7 @@ def on_editor_button(editor):
         action.triggered.connect(lambda _, p=prompt: create_run_prompt_dialog_from_editor(editor, p))
         menu.addAction(action)
 
-    menu.exec_(editor.widget.mapToGlobal(QPoint(0, 0)))
+    menu.exec(editor.widget.mapToGlobal(QPoint(0, 0)))
 
 
 def on_setup_editor_buttons(buttons, editor):

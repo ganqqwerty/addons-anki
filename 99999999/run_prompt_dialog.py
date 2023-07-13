@@ -1,6 +1,6 @@
 import re
 
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox
 from aqt import mw
 from aqt.utils import showWarning
 

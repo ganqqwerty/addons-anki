@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QGuiApplication
+from PyQt6.QtGui import QGuiApplication
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import showInfo
