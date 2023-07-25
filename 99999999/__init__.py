@@ -9,8 +9,23 @@ import os
 from .settings_editor import SettingsWindow
 from .process_notes import process_notes, generate_for_single_note
 from .run_prompt_dialog import RunPromptDialog
+from aqt import appVersion as aqt_version
+from .__version__ import __version__ as plugin_version
+
+import logging
 
 ADDON_NAME = 'IntelliFiller'
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
+logging.info('Python version: ' + sys.version)
+logging.info('Anki version: ' + aqt_version)
+logging.info('IntelliFilter version: ' + plugin_version)
+logging.info('Environment variables:')
+for key, value in os.environ.items():
+    logging.info(f'{key}: {value}')
 
 
 def get_common_fields(selected_nodes_ids):
@@ -73,6 +88,7 @@ def open_settings():
 
 
 def on_editor_button(editor):
+    logging.debug()
     prompts = mw.addonManager.getConfig(__name__).get('prompts', [])
 
     menu = QMenu(editor.widget)
@@ -82,6 +98,7 @@ def on_editor_button(editor):
         menu.addAction(action)
 
     menu.exec(editor.widget.mapToGlobal(QPoint(0, 0)))
+    logging.debug("Editor button is pressed")
 
 
 def on_setup_editor_buttons(buttons, editor):
@@ -95,6 +112,7 @@ def on_setup_editor_buttons(buttons, editor):
         disables=False
     )
     buttons.append(btn)
+    logging.debug("Editor buttons are set up")
     return buttons
 
 
