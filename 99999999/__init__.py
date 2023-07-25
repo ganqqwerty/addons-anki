@@ -16,16 +16,7 @@ import logging
 
 ADDON_NAME = 'IntelliFiller'
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d',
-                    datefmt='%Y-%m-%d %H:%M:%S')
 
-logging.info('Python version: ' + sys.version)
-logging.info('Anki version: ' + aqt_version)
-logging.info('IntelliFilter version: ' + plugin_version)
-logging.info('Environment variables:')
-for key, value in os.environ.items():
-    logging.info(f'{key}: {value}')
 
 
 def get_common_fields(selected_nodes_ids):
@@ -34,6 +25,7 @@ def get_common_fields(selected_nodes_ids):
         note = mw.col.getNote(nid)
         note_fields = set(note.keys())
         common_fields = common_fields.intersection(note_fields)
+    logging.debug("Common fields: %s", common_fields.join(","))
     return list(common_fields)
 
 
@@ -46,6 +38,7 @@ def create_run_prompt_dialog_from_browser(browser, prompt_config):
 
 
 def handle_browser_mode(editor: Editor, prompt_config):
+    logging.debug("handling browser mode")
     browser: Browser = editor.parentWindow
     common_fields = get_common_fields(browser.selectedNotes())
     dialog = RunPromptDialog(browser, common_fields, prompt_config)
@@ -56,7 +49,9 @@ def handle_browser_mode(editor: Editor, prompt_config):
 
 def handle_no_browser_mode(editor: Editor, prompt_config):
     """during edit current mode, the browser is not available, also the card does not yet have its own id."""
+    logging.debug("handling NO browser mode")
     parentWindowOfEditor = editor.parentWindow
+    logging.debug("parent window of editor: %s", parentWindowOfEditor)
     keys = editor.note.keys()
     dialog = RunPromptDialog(parentWindowOfEditor, keys, prompt_config)
     if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -88,7 +83,6 @@ def open_settings():
 
 
 def on_editor_button(editor):
-    logging.debug()
     prompts = mw.addonManager.getConfig(__name__).get('prompts', [])
 
     menu = QMenu(editor.widget)
@@ -115,6 +109,17 @@ def on_setup_editor_buttons(buttons, editor):
     logging.debug("Editor buttons are set up")
     return buttons
 
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s: %(message)s in %(filename)s:%(lineno)d',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
+logging.info('Python version: ' + sys.version)
+logging.info('Anki version: ' + aqt_version)
+logging.info('IntelliFilter version: ' + plugin_version)
+logging.info('Environment variables:')
+for key, value in os.environ.items():
+    logging.info(f'{key}: {value}')
 
 addHook("browser.onContextMenu", add_context_menu_items)
 mw.addonManager.setConfigAction(__name__, open_settings)
