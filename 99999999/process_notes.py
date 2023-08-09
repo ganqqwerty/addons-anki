@@ -1,5 +1,3 @@
-import logging
-
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QPushButton, QLabel
 from aqt import mw
@@ -7,8 +5,8 @@ from aqt.utils import showWarning
 
 from .data_request import create_prompt, send_prompt_to_openai
 from .modify_notes import fill_field_for_note_in_editor, fill_field_for_note_not_in_editor
-from anki.notes import Note, NoteId
-from logging import debug
+from anki.notes import NoteId
+from .logger_config import logger
 
 class MultipleNotesThreadWorker(QThread):
     progress_made = pyqtSignal(int)
@@ -20,16 +18,16 @@ class MultipleNotesThreadWorker(QThread):
         self.prompt_config = prompt_config
 
     def run(self):
-        debug("Thread worker is ran for notes with nodeids", self.notes.join(","))
+        logger.debug("Thread worker is run for notes with nodeids %s", ",".join(map(str, self.notes)))
         for i, nid in enumerate(self.notes):
             if self.isInterruptionRequested():
-                debug("interruption is called on a nid %s %d", nid, i)
+                logger.debug("interruption is called on a nid %s %d", nid, i)
                 break
             else:
-                debug("trying to process note with nid %s", nid)
+                logger.debug("trying to process note with nid %s", nid)
                 enrich_without_editor(nid, self.prompt_config)
             self.progress_made.emit(i + 1)
-            debug("progress: %d", i+1)
+            logger.debug("progress: %d", i+1)
 
 
 

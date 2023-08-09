@@ -66,7 +66,7 @@ class Ui_Form(object):
         self.targetFieldInput.setObjectName("targetFieldInput")
         self.verticalLayout_2.addWidget(self.targetFieldInput)
         self.promptInput = QtWidgets.QTextEdit(parent=self.widget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.promptInput.sizePolicy().hasHeightForWidth())

@@ -12,6 +12,8 @@ class PromptWidget(QWidget, Ui_Form):
         super().__init__(parent)
         self.setupUi(self)  # this sets up the layout and widgets according to your design
 
+        self.promptInput.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
         # Set SVG icon for the remove button
         addon_dir = os.path.dirname(os.path.abspath(__file__))  # Get directory of current file
         icon_path = os.path.join(addon_dir, 'remove.svg')  # Create path to the icon
