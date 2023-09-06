@@ -71,6 +71,7 @@ def generate_kanji_table(jlpt_list):
             <th>Kunyomi</th>
             <th>Translations</th>
             <th>Popularity</th>
+            <th>Amount</th> <!-- New column header -->
         </tr>
     </thead>
     <tbody>
@@ -91,6 +92,7 @@ def generate_kanji_table(jlpt_list):
             <td>{kunyomi}</td>
             <td>{meanings}</td>
             <td>{popularity}</td>
+            <td>{count}</td> <!-- New column data -->
         </tr>
         """
 
