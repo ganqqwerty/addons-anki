@@ -8,10 +8,11 @@ from anki.hooks import addHook
 import json
 
 addon_dir = os.path.dirname(os.path.realpath(__file__))
-db_file = os.path.join(addon_dir,"kanji.json")
+db_file = os.path.join(addon_dir, "kanji.json")
 # Load the kanji data from the JSON file
 with open(db_file, "r", encoding="utf-8") as file:
     KANJI_DATA = json.load(file)
+
 
 def classify_kanji_by_jlpt(kanji_dict):
     jlpt_lists = {5: [], 4: [], 3: [], 2: [], 1: [], 'not_in_jlpt': []}
@@ -51,35 +52,109 @@ def get_kanji_count_by_note(cards, field_name):
 
     return kanji_dict, no_field_count
 
+
 def get_sorted_list(kanji_dict, criteria_set):
     filtered_items = {k: v for k, v in kanji_dict.items() if k in criteria_set}.items()
     return sorted(filtered_items, key=lambda item: item[1], reverse=True)
 
 
+def generate_kanji_table(jlpt_list):
+    # Start the HTML table
+    table_html = '<table border="1">'
+
+    # Headers
+    table_html += """
+    <thead>
+        <tr>
+            <th>Kanji</th>
+            <th>Onyomi</th>
+            <th>Kunyomi</th>
+            <th>Translations</th>
+            <th>Popularity</th>
+        </tr>
+    </thead>
+    <tbody>
+    """
+
+    for kanji, count in jlpt_list:
+        data = KANJI_DATA.get(kanji, {})
+        onyomi = ", ".join(data.get("readings_on", []))
+        kunyomi = ", ".join(data.get("readings_kun", []))
+        meanings = ", ".join(data.get("meanings", []))
+        freq = data.get("freq", None)
+        popularity = f"Top {freq}" if freq else ""
+
+        table_html += f"""
+        <tr>
+            <td style="font-size: 24px;">{kanji}</td>
+            <td>{onyomi}</td>
+            <td>{kunyomi}</td>
+            <td>{meanings}</td>
+            <td>{popularity}</td>
+        </tr>
+        """
+
+    # Close the table
+    table_html += "</tbody></table>"
+
+    return table_html
+
+
 def format_kanji_statistics(kanji_dict, jlpt_lists, total_cards, no_field_count, kanji_count, kana_count, field_name):
     n5_list, n4_list, n3_list, n2_list, n1_list, not_in_jlpt = jlpt_lists
 
-    stats = f"""Total cards: {total_cards}
-    Cards that don't have the "{field_name}" field: {no_field_count}
-    Total japanese characters in "{field_name}" field: {kanji_count + kana_count}
-    Kanji: {kanji_count}
-    Unique kanji: {len(kanji_dict)}
-    Kana: {kana_count}
-    ------
-    N5 Kanji: {", ".join([f"{k} ({v})" for k, v in n5_list])}
-    N4 Kanji: {", ".join([f"{k} ({v})" for k, v in n4_list])}
-    N3 Kanji: {", ".join([f"{k} ({v})" for k, v in n3_list])}
-    N2 Kanji: {", ".join([f"{k} ({v})" for k, v in n2_list])}
-    N1 Kanji: {", ".join([f"{k} ({v})" for k, v in n1_list])}
-    not in JLPT: {", ".join([f"{k} ({v})" for k, v in not_in_jlpt])}"""
+    CSS_STYLE = """
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid #d4d4d4;
+        padding: 8px 12px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    tr:hover {
+        background-color: #f5f5f5;
+    }
+</style>
+"""
+
+    stats = f"""{CSS_STYLE}
+    <ul>
+        <li>Total cards: {total_cards}</li>
+        <li>Cards that don't have the "{field_name}" field: {no_field_count}</li>
+        <li>Total japanese characters in "{field_name}" field: {kanji_count + kana_count}</li>
+        <li>Kanji: {kanji_count}</li>
+        <li>Unique kanji: {len(kanji_dict)}</li>
+        <li>Kana: {kana_count}</li>
+    </ul>
+    <h3>N5 Kanji</h3>
+    {generate_kanji_table(n5_list)}
+    <h3>N4 Kanji</h3>
+    {generate_kanji_table(n4_list)}
+    <h3>N3 Kanji</h3>
+    {generate_kanji_table(n3_list)}
+    <h3>N2 Kanji</h3>
+    {generate_kanji_table(n2_list)}
+    <h3>N1 Kanji</h3>
+    {generate_kanji_table(n1_list)}
+    <h3>Not in JLPT</h3>
+    {generate_kanji_table(not_in_jlpt)}"""
 
     return stats
+
 
 def on_browser_init(browser):
     action = QAction("Count characters", browser)
     action.triggered.connect(lambda _, b=browser: show_dialog(b))
     browser.form.menuEdit.addAction(action)
-    
+
 
 addHook("browser.setupMenus", on_browser_init)
 
@@ -116,16 +191,19 @@ def count_characters(cards, field_name):
 
     kanji_dict, no_field_count = get_kanji_count_by_note(cards, field_name)
     jlpt_lists = classify_kanji_by_jlpt(kanji_dict)
-    stats = format_kanji_statistics(kanji_dict, jlpt_lists, total_cards, no_field_count, kanji_count, kana_count, field_name)
+    stats = format_kanji_statistics(kanji_dict, jlpt_lists, total_cards, no_field_count, kanji_count, kana_count,
+                                    field_name)
 
     return stats
 
+
 def add_context_menu_items(browser, menu):
     config = mw.addonManager.getConfig(__name__)
-    
+
     action = QAction("Count characters", browser)
     action.triggered.connect(lambda _, b=browser: show_dialog(b))
     menu.addAction(action)
+
 
 def show_dialog(browser):
     cards = browser.selected_cards()
@@ -148,7 +226,7 @@ def show_dialog(browser):
     def on_count():
         field_name = field_name_input.toPlainText()
         stats = count_characters(cards, field_name)
-        result_display.setPlainText(stats)
+        result_display.setHtml(stats)
 
     count_button.clicked.connect(on_count)
 
