@@ -3,15 +3,17 @@ from aqt.qt import *
 from aqt.gui_hooks import editor_did_init_buttons
 from aqt.editor import EditorMode, Editor
 from aqt.browser import Browser
+from aqt.editcurrent import EditCurrent
+from aqt.addcards import AddCards
 from anki.hooks import addHook
 import os
 
 from .settings_editor import SettingsWindow
 from .process_notes import process_notes, generate_for_single_note
 from .run_prompt_dialog import RunPromptDialog
+from aqt.utils import showWarning
 
 ADDON_NAME = 'IntelliFiller'
-
 
 def get_common_fields(selected_nodes_ids):
     common_fields = set(mw.col.getNote(selected_nodes_ids[0]).keys())
@@ -21,14 +23,12 @@ def get_common_fields(selected_nodes_ids):
         common_fields = common_fields.intersection(note_fields)
     return list(common_fields)
 
-
 def create_run_prompt_dialog_from_browser(browser, prompt_config):
     common_fields = get_common_fields(browser.selectedNotes())
     dialog = RunPromptDialog(browser, common_fields, prompt_config)
     if dialog.exec() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
-
 
 def handle_browser_mode(editor: Editor, prompt_config):
     browser: Browser = editor.parentWindow
@@ -38,23 +38,29 @@ def handle_browser_mode(editor: Editor, prompt_config):
         updated_prompt_config = dialog.get_result()
         process_notes(browser, updated_prompt_config)
 
-
-def handle_no_browser_mode(editor: Editor, prompt_config):
-    """during edit current mode, the browser is not available, also the card does not yet have its own id."""
-    parentWindowOfEditor = editor.parentWindow
-    keys = editor.note.keys()
-    dialog = RunPromptDialog(parentWindowOfEditor, keys, prompt_config)
+def handle_edit_current_mode(editor: Editor, prompt_config):
+    editCurrentWindow: EditCurrent = editor.parentWindow
+    common_fields = get_common_fields([editor.note.id])
+    dialog = RunPromptDialog(editCurrentWindow, common_fields, prompt_config)
     if dialog.exec() == QDialog.DialogCode.Accepted:
         updated_prompt_config = dialog.get_result()
         generate_for_single_note(editor, updated_prompt_config)
 
+def handle_add_cards_mode(editor: Editor, prompt_config):
+    addCardsWindow: AddCards = editor.parentWindow
+    keys = editor.note.keys()
+    dialog = RunPromptDialog(addCardsWindow, keys, prompt_config)
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        updated_prompt_config = dialog.get_result()
+        generate_for_single_note(editor, updated_prompt_config)
 
 def create_run_prompt_dialog_from_editor(editor: Editor, prompt_config):
     if editor.editorMode == EditorMode.BROWSER:
         handle_browser_mode(editor, prompt_config)
-    elif editor.editorMode == EditorMode.EDIT_CURRENT or editor.editorMode == EditorMode.ADD_CARDS:
-        handle_no_browser_mode(editor, prompt_config)
-
+    elif editor.editorMode == EditorMode.EDIT_CURRENT:
+        handle_edit_current_mode(editor, prompt_config)
+    elif editor.editorMode == EditorMode.ADD_CARDS:
+        handle_add_cards_mode(editor, prompt_config)
 
 def add_context_menu_items(browser, menu):
     submenu = QMenu(ADDON_NAME, menu)

@@ -61,4 +61,3 @@ def get_invalid_fields_in_prompt(prompt, valid_field_names):
     pf_names_set = set(prompt_field_names)
     cf_names_set = set(valid_field_names)
     return pf_names_set.difference(cf_names_set)
-

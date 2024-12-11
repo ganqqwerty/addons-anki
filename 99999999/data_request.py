@@ -7,10 +7,9 @@ from aqt import mw
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
 sys.path.append(vendor_dir)
-import openai
 
-import time;
-from openai import error
+import openai
+from .anthropic_client import SimpleAnthropicClient
 
 
 from html import unescape
@@ -34,29 +33,24 @@ def create_prompt(note, prompt_config):
 def send_prompt_to_openai(prompt):
     config = mw.addonManager.getConfig(__name__)
     if config['emulate'] == 'yes':
-        print("Fake request chatgpt: ", prompt)
+        print("Fake request: ", prompt)
         return f"This is a fake response for emulation mode for the prompt {prompt}."
 
     try:
-        print("Request to ChatGPT: ", prompt)
-        openai.api_key = config['apiKey']
-
-        def try_call():
-            # gpt-3.5-turbo
-            # gpt-4o-mini, faster, cheaper, more precise, https://openai.com/api/pricing/
-            response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], max_tokens=2000)
-            print("Response from ChatGPT", response)
+        print("Request to API: ", prompt)
+        if config['selectedApi'] == 'anthropic':
+            client = SimpleAnthropicClient(api_key=config['anthropicKey'])
+            return client.create_message(prompt)
+        else:  # openai
+            openai.api_key = config['apiKey']
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo", 
+                messages=[{"role": "user", "content": prompt}], 
+                max_tokens=2000
+            )
             return response.choices[0].message.content.strip()
 
-        maximum = 300
-        while maximum > 0:
-            maximum -= 1
-            try:
-                return try_call()
-
-            except error.RateLimitError as e:
-                time.sleep(1.0)  # gpt-4o is has a token limit
-
     except Exception as e:
-        print(f"An error occurred while processing the note: {str(e)}", file=sys.stderr)
+        showWarning(f"An error occurred while processing the note: {str(e)}")
+        return None
         return None

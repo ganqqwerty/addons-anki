@@ -6,7 +6,11 @@ def format_response_and_fill_field(response, note, target_field):
     formatted_response = response.replace("\n", "<br>")
 
     if target_field in note:
-        note[target_field] = formatted_response
+        existing_content = note[target_field]
+        if existing_content.strip():  # If there's existing content
+            note[target_field] = existing_content + "<hr>" + formatted_response
+        else:
+            note[target_field] = formatted_response
     else:
         raise ValueError(f"Target field '{target_field}' not found in note.")
 
