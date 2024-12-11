@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "apiKey": {
+      "type": "string",
+      "description": "API key to access OpenAI GPT API."
+    },
+    "anthropicKey": {
+      "type": "string",
+      "description": "API key to access Anthropic Claude API."
+    },
+    "selectedApi": {
+      "type": "string",
+      "enum": ["openai", "anthropic"],
+      "description": "Which API to use"
+    },
+    "emulate": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no"
+      ],
+      "description": "Setting to enable or disable emulation mode."
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Array of prompt configurations.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Template of the prompt to be sent to the GPT API. You can use field names in a form {{{FIELD_NAME}}}. Such placeholders will be replaced to the content of the corresponding fields."
+          },
+          "targetField": {
+            "type": "string",
+            "description": "Field name where the GPT response should be stored."
+          },
+          "promptName": {
+            "type": "string",
+            "description": "Name for this prompt configuration."
+          }
+        },
+        "required": [
+          "prompt",
+          "targetField",
+          "promptName"
+        ]
+      }
+    }
+  },
+  "required": [
+    "apiKey",
+    "anthropicKey",
+    "selectedApi",
+    "emulate",
+    "prompts"
+  ],
+  "description": "Schema for the configuration of Anki AI Add-on."
+}
