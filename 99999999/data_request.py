@@ -43,8 +43,9 @@ def send_prompt_to_openai(prompt):
             return client.create_message(prompt)
         else:  # openai
             openai.api_key = config['apiKey']
+            # gpt-4o-mini, faster, cheaper, more precise, https://openai.com/api/pricing/
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo", 
+                model="gpt-4o-mini", 
                 messages=[{"role": "user", "content": prompt}], 
                 max_tokens=2000
             )
