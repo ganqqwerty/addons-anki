@@ -1,7 +1,9 @@
 import re
 import sys
+import os
 from aqt.utils import showWarning
 from aqt import mw
+
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
 sys.path.append(vendor_dir)
