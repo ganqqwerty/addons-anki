@@ -1,11 +1,11 @@
 from PyQt6.QtGui import QGuiApplication, QIcon
 from PyQt6.QtWidgets import QWidget, QDialog
-from PyQt6.QtCore import QSize  # QSize is in QtCore
+from PyQt6.QtCore import QSize
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import showInfo
 
-from .prompt_ui import Ui_Form  # Import the class from your generated Python file
+from .prompt_ui import Ui_Form
 from .settings_window_ui import Ui_SettingsWindow
 import json
 
@@ -17,7 +17,6 @@ class PromptWidget(QWidget, Ui_Form):
         addon_dir = os.path.dirname(os.path.abspath(__file__))
         icon_path = os.path.join(addon_dir, 'remove.svg')
         self.removePromptButton.setIcon(QIcon(icon_path))
-        # QSize is now in QtCore
         self.removePromptButton.setIconSize(QSize(24, 24))
 
 
@@ -50,7 +49,6 @@ class SettingsWindow(QDialog, Ui_SettingsWindow):
         promptWidget.promptInput.setPlainText(prompt["prompt"])
         promptWidget.targetFieldInput.setText(prompt["targetField"])
         promptWidget.promptNameInput.setText(prompt["promptName"])
-        # Lambda functions in signal connections remain the same
         promptWidget.removePromptButton.clicked.connect(
             lambda: self.remove_prompt(promptWidget))
         
