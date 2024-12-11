@@ -5,9 +5,10 @@ from aqt.utils import showWarning
 
 from .data_request import create_prompt, send_prompt_to_llm
 from .modify_notes import fill_field_for_note_in_editor, fill_field_for_note_not_in_editor
+from anki.notes import Note, NoteId
 
 
-class Worker(QThread):
+class MultipleNotesThreadWorker(QThread):
     progress_made = pyqtSignal(int)
 
     def __init__(self, notes, browser, prompt_config):
@@ -20,16 +21,14 @@ class Worker(QThread):
         for i, nid in enumerate(self.notes):
             if self.isInterruptionRequested():
                 break
-            if len(self.notes) == 1 and self.browser.editor and self.browser.editor.note:
-                generate_for_single_note(self.browser.editor, self.prompt_config)
             else:
-                generate_for_multiple_notes(nid, self.prompt_config)
-            self.progress_made.emit(i+1)
+                enrich_without_editor(nid, self.prompt_config)
+            self.progress_made.emit(i + 1)
 
 
 class ProgressDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super(ProgressDialog, self).__init__(parent)
         self.worker = None
         layout = QVBoxLayout()
 
@@ -53,15 +52,16 @@ class ProgressDialog(QDialog):
     def run_task(self, notes, prompt_config):
         self.progress_bar.setMaximum(len(notes))
         self.progress_bar.setValue(0)
-        self.worker = Worker(notes, mw.col, prompt_config)  
+        self.worker = MultipleNotesThreadWorker(notes, mw.col, prompt_config)  # pass the notes and prompt_config
         self.worker.progress_made.connect(self.update_progress)
-        self.worker.finished.connect(self.on_worker_finished)  
+        self.worker.finished.connect(self.on_worker_finished)  # connect the finish signal to a slot
         self.worker.start()
         self.show()
 
     def on_worker_finished(self):
-        self.update_progress(self.progress_bar.maximum())  
-        self.close()  
+        self.update_progress(
+            self.progress_bar.maximum())  # when the worker is finished, set the progress bar to maximum
+        self.close()  # close the dialog when the worker finishes
 
     def cancel(self):
         if self.worker:
@@ -78,8 +78,8 @@ def generate_for_single_note(editor, prompt_config):
     fill_field_for_note_in_editor(response, target_field, editor)
 
 
-def generate_for_multiple_notes(nid, prompt_config):
-    """Generate text for multiple notes."""
+def enrich_without_editor(nid: NoteId, prompt_config):
+    """generate"""
     note = mw.col.get_note(nid)
     prompt = create_prompt(note, prompt_config)
     response = send_prompt_to_llm(prompt)
