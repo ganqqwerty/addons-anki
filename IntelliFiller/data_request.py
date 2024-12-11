@@ -4,8 +4,24 @@ import os
 from aqt.utils import showWarning
 from aqt import mw
 
+import platform
+def get_platform_specific_vendor():
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    
+    if system == 'darwin':  # macOS
+        if machine == 'arm64':
+            return 'darwin_arm64'
+        return 'darwin_x86_64'
+    elif system == 'windows':
+        return 'win32'
+    elif system == 'linux':
+        return 'linux'
+    else:
+        raise RuntimeError(f"Unsupported platform: {system} {machine}")
+
 addon_dir = os.path.dirname(os.path.realpath(__file__))
-vendor_dir = os.path.join(addon_dir, "vendor")
+vendor_dir = os.path.join(addon_dir, "vendor", get_platform_specific_vendor())
 sys.path.append(vendor_dir)
 
 import openai

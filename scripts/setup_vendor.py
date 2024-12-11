@@ -1,6 +1,8 @@
 import subprocess
 import shutil
 import os
+import platform
+import sys
 
 def setup_vendor():
     # Create/clean vendor directory
@@ -9,13 +11,30 @@ def setup_vendor():
         shutil.rmtree(vendor_dir)
     os.makedirs(vendor_dir)
 
-    # Install dependencies into vendor directory
-    subprocess.check_call([
-        'pip', 'install',
-        '--target', vendor_dir,
+    # Determine platform-specific pip arguments
+    pip_args = ['pip', 'install', '--target', vendor_dir]
+    
+    # On macOS ARM64, we need to specify platform
+    if platform.system() == 'Darwin' and platform.machine() == 'arm64':
+        pip_args.extend(['--platform', 'macosx_11_0_arm64'])
+        # Ensure we don't try to compile from source
+        pip_args.append('--only-binary=:all:')
+
+    # Add the packages
+    pip_args.extend([
         'openai>=1.0.0',
         'httpx>=0.24.0'
     ])
+
+    try:
+        subprocess.check_call(pip_args)
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing packages: {e}")
+        # If the platform-specific install fails, try without platform specification
+        if platform.system() == 'Darwin' and platform.machine() == 'arm64':
+            print("Attempting fallback installation...")
+            pip_args = ['pip', 'install', '--target', vendor_dir, 'openai>=1.0.0', 'httpx>=0.24.0']
+            subprocess.check_call(pip_args)
 
     # Remove unnecessary files to keep vendor directory slim
     for root, dirs, files in os.walk(vendor_dir):
