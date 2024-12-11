@@ -26,15 +26,50 @@
    <item>
     <widget class="QLabel" name="labelApiKey">
      <property name="text">
-      <string>API Key:</string>
+      <string>OpenAI API Key:</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QLineEdit" name="apiKey">
      <property name="placeholderText">
-      <string>API key</string>
+      <string>OpenAI API key</string>
      </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelAnthropicKey">
+     <property name="text">
+      <string>Anthropic API Key:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="anthropicKey">
+     <property name="placeholderText">
+      <string>Anthropic API key</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelSelectedApi">
+     <property name="text">
+      <string>Selected API:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="selectedApi">
+     <item>
+      <property name="text">
+       <string>openai</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>anthropic</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item>

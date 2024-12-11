@@ -6,6 +6,15 @@
       "type": "string",
       "description": "API key to access OpenAI GPT API."
     },
+    "anthropicKey": {
+      "type": "string",
+      "description": "API key to access Anthropic Claude API."
+    },
+    "selectedApi": {
+      "type": "string",
+      "enum": ["openai", "anthropic"],
+      "description": "Which API to use"
+    },
     "emulate": {
       "type": "string",
       "enum": [
@@ -43,6 +52,8 @@
   },
   "required": [
     "apiKey",
+    "anthropicKey",
+    "selectedApi",
     "emulate",
     "prompts"
   ],

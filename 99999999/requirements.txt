@@ -53,3 +53,5 @@ unidic-lite==1.0.8
 urllib3==2.0.3
 wcwidth==0.2.5
 yattag==1.15.1
+anthropic==0.7.6
+

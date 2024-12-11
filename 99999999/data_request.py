@@ -7,8 +7,9 @@ from aqt import mw
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 vendor_dir = os.path.join(addon_dir, "vendor")
 sys.path.append(vendor_dir)
-import openai
 
+import openai
+from .anthropic_client import SimpleAnthropicClient
 import time;
 from openai import error
 
@@ -31,32 +32,46 @@ def create_prompt(note, prompt_config):
     return prompt_template
 
 
-def send_prompt_to_openai(prompt):
+def send_prompt_to_llm(prompt):
     config = mw.addonManager.getConfig(__name__)
     if config['emulate'] == 'yes':
-        print("Fake request chatgpt: ", prompt)
+        print("Fake request: ", prompt)
         return f"This is a fake response for emulation mode for the prompt {prompt}."
 
     try:
-        print("Request to ChatGPT: ", prompt)
-        openai.api_key = config['apiKey']
-
-        def try_call():
-            # gpt-3.5-turbo
-            # gpt-4o-mini, faster, cheaper, more precise, https://openai.com/api/pricing/
-            response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], max_tokens=2000)
-            print("Response from ChatGPT", response)
+        print("Request to API: ", prompt)
+        
+        def try_openai_call():
+            openai.api_key = config['apiKey']
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini", 
+                messages=[{"role": "user", "content": prompt}], 
+                max_tokens=2000
+            )
+            print("Response from OpenAI:", response)
             return response.choices[0].message.content.strip()
+            
+        def try_anthropic_call():
+            client = SimpleAnthropicClient(api_key=config['anthropicKey'])
+            response = client.create_message(prompt)
+            print("Response from Anthropic:", response)
+            return response
 
         maximum = 300
         while maximum > 0:
             maximum -= 1
             try:
-                return try_call()
-
-            except error.RateLimitError as e:
-                time.sleep(1.0)  # gpt-4o is has a token limit
+                if config['selectedApi'] == 'anthropic':
+                    return try_anthropic_call()
+                else:  # openai
+                    return try_openai_call()
+            except openai.error.RateLimitError as e:
+                time.sleep(1.0)  # Wait before retrying
+            except Exception as e:
+                # For other exceptions, we don't want to retry
+                raise e
 
     except Exception as e:
         print(f"An error occurred while processing the note: {str(e)}", file=sys.stderr)
+        showWarning(f"An error occurred while processing the note: {str(e)}")
         return None
