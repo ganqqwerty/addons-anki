@@ -5,7 +5,6 @@ from aqt import mw
 import openai
 from .anthropic_client import SimpleAnthropicClient
 import time;
-from openai import error
 
 
 from html import unescape
