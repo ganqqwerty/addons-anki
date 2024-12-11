@@ -115,4 +115,4 @@ if __name__ == "__main__":
     ui = Ui_SettingsWindow()
     ui.setupUi(SettingsWindow)
     SettingsWindow.show()
-    sys.exit(app.exec())  # Changed from exec_() to exec()
+    sys.exit(app.exec())
